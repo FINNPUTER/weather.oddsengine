@@ -6,77 +6,91 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-:root{--bg:#04080d;--bg1:#080e16;--bg2:#0c131d;--card:#0e1620;--card2:#111c28;--bdr:#152030;--bdrh:#1e3048;--t1:#d8e2ee;--t2:#607890;--t3:#304060;--blue:#1e90ff;--bluel:#3aa0ff;--blued:rgba(30,144,255,.08);--green:#00d97e;--greend:rgba(0,217,126,.08);--amber:#f5a623;--amberd:rgba(245,166,35,.08);--red:#ff4757;--redd:rgba(255,71,87,.08);--violet:#8b5cf6;--violetd:rgba(139,92,246,.08);--cyan:#06d6a0;--mono:'IBM Plex Mono',monospace;--sans:'Outfit',sans-serif}
+:root{--bg:#04080d;--bg1:#080e16;--bg2:#0c131d;--card:#0e1620;--card2:#111c28;--bdr:#152030;--bdrh:#1e3048;--t1:#f0f4f8;--t2:#9cb0c4;--t3:#5a7a94;--blue:#1e90ff;--bluel:#3aa0ff;--blued:rgba(30,144,255,.08);--green:#00d97e;--greend:rgba(0,217,126,.08);--amber:#f5a623;--amberd:rgba(245,166,35,.08);--red:#ff4757;--redd:rgba(255,71,87,.08);--violet:#8b5cf6;--violetd:rgba(139,92,246,.08);--cyan:#06d6a0;--mono:'IBM Plex Mono',monospace;--sans:'Outfit',sans-serif}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px;-webkit-font-smoothing:antialiased}
 
-.layout{display:grid;grid-template-rows:auto auto auto 1fr auto;grid-template-columns:1fr 380px;height:100vh}
-.header{grid-column:1/-1;border-bottom:1px solid var(--bdr);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--bg2),var(--bg))}
-.ticker{grid-column:1/-1;border-bottom:1px solid var(--bdr);background:var(--bg1);padding:4px 0;overflow:hidden;white-space:nowrap}
+.layout{display:grid;grid-template-rows:auto auto auto 1fr auto;grid-template-columns:1fr 400px;height:100vh}
+.header{grid-column:1/-1;border-bottom:1px solid var(--bdr);padding:6px 20px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--bg2),var(--bg))}
+.ticker{grid-column:1/-1;border-bottom:1px solid var(--bdr);background:var(--bg1);padding:3px 0;overflow:hidden;white-space:nowrap}
 .ticker-inner{display:inline-flex;gap:28px;animation:scroll 100s linear infinite}
 @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .stats{grid-column:1/-1;display:flex;border-bottom:1px solid var(--bdr);background:var(--bg1)}
-.stat{flex:1;padding:8px 14px;border-right:1px solid var(--bdr)}.stat:last-child{border:none}
-.stat-l{font-size:8px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1px}
-.stat-v{font-size:15px;font-weight:600;font-family:var(--sans)}
+.stat{flex:1;padding:6px 14px;border-right:1px solid var(--bdr)}.stat:last-child{border:none}
+.stat-l{font-size:8px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase}
+.stat-v{font-size:14px;font-weight:600;font-family:var(--sans)}
 
 .map-wrap{position:relative;overflow:hidden}
 .panel{border-left:1px solid var(--bdr);display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
 .tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--bg1)}
-.tab{flex:1;padding:8px;border:none;background:transparent;color:var(--t3);font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
+.tab{flex:1;padding:7px;border:none;background:transparent;color:var(--t3);font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
 .tab:hover{color:var(--t2)}.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
 .panel-body{flex:1;overflow-y:auto;padding:10px;scrollbar-width:thin;scrollbar-color:var(--bdr) transparent}
 
-.footer{grid-column:1/-1;border-top:1px solid var(--bdr);padding:5px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--bg1)}
+.footer{grid-column:1/-1;border-top:1px solid var(--bdr);padding:4px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--bg1)}
 
 /* Header */
-.logo-mark{width:28px;height:28px;border-radius:6px}
 .brand{font-size:13px;font-weight:700;letter-spacing:3px;color:#fff;text-transform:uppercase;font-family:var(--sans)}
 .brand span{color:var(--blue)}
 .brand-sub{font-size:9px;color:var(--t2);letter-spacing:1px}
 @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 
+/* Date navigation */
+.date-nav{display:flex;align-items:center;gap:3px;background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:3px}
+.date-btn{padding:4px 10px;border:none;background:transparent;color:var(--t2);font-family:var(--mono);font-size:10px;font-weight:500;cursor:pointer;border-radius:4px;transition:.15s;white-space:nowrap}
+.date-btn:hover{color:var(--t1);background:var(--bg2)}
+.date-btn.on{color:var(--blue);background:var(--blued);font-weight:600}
+.date-btn.no-market{opacity:.4}
+.date-arrow{padding:4px 8px;border:none;background:transparent;color:var(--t2);font-size:14px;cursor:pointer;border-radius:4px}
+.date-arrow:hover{color:var(--t1);background:var(--bg2)}
+
 /* Cards */
 .city-card{background:var(--card);border:1px solid var(--bdr);border-radius:6px;padding:10px 12px;margin-bottom:5px;cursor:pointer;transition:all .15s}
 .city-card:hover{border-color:var(--bdrh);background:var(--card2)}
-.city-card.rain{border-left:3px solid var(--violet)}
-.city-card.edge{border-left:3px solid var(--blue)}
-.city-card.bet{border-left:3px solid var(--green)}
-.cc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.city-card.edge-strong{border-left:3px solid var(--green)}
+.city-card.edge-med{border-left:3px solid var(--blue)}
+.city-card.edge-rain{border-left:3px solid var(--violet)}
+.city-card.edge-none{border-left:3px solid var(--bdr)}
+.city-card.has-bet{box-shadow:inset 0 0 0 1px rgba(0,217,126,.15)}
+.cc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
 .cc-name{font-size:12px;font-weight:600;color:#fff;font-family:var(--sans)}
 .cc-temp{font-size:18px;font-weight:800;font-family:var(--sans)}
-.cc-meta{display:flex;gap:6px;font-size:9px;color:var(--t2);flex-wrap:wrap;margin-bottom:4px}
+.cc-meta{display:flex;gap:5px;font-size:9px;color:var(--t2);flex-wrap:wrap}
 .tag{padding:1px 6px;border-radius:3px;font-size:8px;font-weight:600;letter-spacing:.3px}
 .tag-rain{background:var(--violetd);color:var(--violet)}
 .tag-dry{background:var(--greend);color:var(--green)}
 .tag-edge{background:var(--blued);color:var(--bluel)}
 .tag-bet{background:var(--greend);color:var(--green)}
 .tag-region{background:var(--blued);color:var(--t2);font-size:7px}
+.tag-buy{background:rgba(0,217,126,.15);color:var(--green);font-weight:700;letter-spacing:.5px}
+.tag-skip{background:var(--bg2);color:var(--t3)}
+.tag-lotto{background:rgba(245,166,35,.1);color:var(--amber)}
+
+/* Source comparison */
+.src-row{display:flex;gap:4px;font-size:9px;margin:3px 0;align-items:center}
+.src-label{width:28px;color:var(--t3);font-weight:600;font-size:7px;letter-spacing:.5px;text-transform:uppercase}
+.src-val{color:var(--t1);font-weight:500}
+.src-adj{color:var(--amber);font-size:8px}
+
+/* Edge meter */
+.edge-meter{height:4px;border-radius:2px;background:var(--bg2);margin:4px 0;overflow:hidden}
+.edge-fill{height:100%;border-radius:2px;transition:width .3s}
 
 /* Rain bars */
-.rain-row{display:flex;gap:1px;height:14px;margin:3px 0}
-.rain-bar{flex:1;border-radius:1px;min-width:0;position:relative}
-.rain-bar:hover::after{content:attr(data-tip);position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--bdr);padding:2px 5px;border-radius:3px;font-size:8px;white-space:nowrap;z-index:10;color:var(--t1)}
-
-/* Temp row */
-.temp-row{display:flex;gap:1px;height:20px;margin:2px 0;align-items:flex-end}
+.rain-row{display:flex;gap:1px;height:12px;margin:2px 0}
+.rain-bar{flex:1;border-radius:1px;min-width:0}
+.temp-row{display:flex;gap:1px;height:18px;margin:2px 0;align-items:flex-end}
 .temp-fill{flex:1;border-radius:1px 1px 0 0;min-width:0}
 
-.time-labels{display:flex;gap:1px;font-size:7px;color:var(--t3)}
-.time-labels span{flex:1;text-align:center}
+/* Market row */
+.mkt-row{display:flex;gap:2px;flex-wrap:wrap;margin:3px 0}
+.mkt-chip{padding:2px 5px;border-radius:3px;font-size:8px;font-weight:500;background:var(--bg2);color:var(--t2);border:1px solid transparent}
+.mkt-chip.hot{border-color:var(--green);color:var(--green);background:var(--greend)}
+.mkt-chip.warm{border-color:var(--blue);color:var(--bluel);background:var(--blued)}
 
-.verdict{font-size:9px;padding:2px 7px;border-radius:3px;display:inline-block;margin-top:3px}
-.v-safe{background:var(--greend);color:var(--green)}
-.v-rain{background:var(--violetd);color:var(--violet)}
-.v-warn{background:var(--amberd);color:var(--amber)}
-
-.mkt-info{font-size:9px;color:var(--t2);margin-top:3px}
-
-.section-label{font-size:8px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
-
-/* Loading */
+.section-label{font-size:8px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
 .loading{text-align:center;padding:30px;color:var(--t2)}
 
 /* Leaflet overrides */
@@ -87,7 +101,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px
 /* Custom markers */
 .city-marker{border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-weight:700;font-size:10px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);cursor:pointer;transition:transform .2s}
 .city-marker:hover{transform:scale(1.3);z-index:1000!important}
-.city-label{font-family:var(--mono);font-size:9px;font-weight:500;color:rgba(255,255,255,.6);white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+.city-label{font-family:var(--mono);font-size:9px;font-weight:500;color:rgba(255,255,255,.85);white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.9)}
 
 /* Popup */
 .city-popup .leaflet-popup-content-wrapper{background:rgba(12,19,29,.96)!important;border:1px solid var(--bdrh)!important;border-radius:8px!important;color:var(--t1)!important;box-shadow:0 8px 32px rgba(0,0,0,.6)!important;backdrop-filter:blur(12px)}
@@ -96,22 +110,20 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px
 
 /* Perf tab */
 .perf-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bdr)}
-.perf-win{color:var(--green)}.perf-loss{color:var(--red)}
 
 .flink{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);text-decoration:none;padding:3px 10px;border:1px solid rgba(30,144,255,.3);border-radius:4px}.flink:hover{background:var(--blued)}
 
 /* Filter buttons */
-.filters{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
-.fbtn{padding:3px 8px;font-size:8px;font-weight:600;letter-spacing:.5px;border:1px solid var(--bdr);background:transparent;color:var(--t2);border-radius:3px;cursor:pointer;font-family:var(--mono);transition:.15s}
+.filters{display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap}
+.fbtn{padding:3px 7px;font-size:8px;font-weight:600;letter-spacing:.5px;border:1px solid var(--bdr);background:transparent;color:var(--t2);border-radius:3px;cursor:pointer;font-family:var(--mono);transition:.15s}
 .fbtn:hover{border-color:var(--bdrh);color:var(--t1)}.fbtn.on{border-color:var(--blue);color:var(--bluel);background:var(--blued)}
 
 /* Weather layer controls */
 .wlayer-panel{position:absolute;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:2px}
-.wlayer-btn{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(14,22,32,.92);border:1px solid var(--bdr);border-radius:6px;color:var(--t2);font-family:var(--mono);font-size:10px;font-weight:500;cursor:pointer;transition:all .15s;backdrop-filter:blur(8px);letter-spacing:.3px;min-width:140px}
-.wlayer-btn:hover{border-color:var(--bdrh);color:var(--t1);background:rgba(17,28,40,.95)}
+.wlayer-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(14,22,32,.92);border:1px solid var(--bdr);border-radius:5px;color:var(--t2);font-family:var(--mono);font-size:9px;font-weight:500;cursor:pointer;transition:all .15s;backdrop-filter:blur(8px);min-width:130px}
+.wlayer-btn:hover{border-color:var(--bdrh);color:var(--t1)}
 .wlayer-btn.on{border-color:var(--blue);color:var(--bluel);background:rgba(30,144,255,.08)}
-.wlayer-btn .wl-icon{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px}
-.wlayer-btn .wl-dot{width:6px;height:6px;border-radius:50%;margin-left:auto;opacity:0;transition:.15s}
+.wlayer-btn .wl-dot{width:5px;height:5px;border-radius:50%;margin-left:auto;opacity:0;transition:.15s}
 .wlayer-btn.on .wl-dot{opacity:1}
 
 @media(max-width:900px){
@@ -125,9 +137,9 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px
 <!-- HEADER -->
 <div class="header">
   <div style="display:flex;align-items:center;gap:10px">
-    <img class="logo-mark" src="data:image/png;base64,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" alt="">
-    <div><div class="brand">Odds<span>Engine</span></div><div class="brand-sub">Weather Intelligence · Live Data</div></div>
+    <div><div class="brand">Odds<span>Engine</span></div><div class="brand-sub">Weather Intelligence · Edge Detection</div></div>
   </div>
+  <div class="date-nav" id="date-nav"></div>
   <div style="display:flex;align-items:center;gap:12px">
     <div style="text-align:right"><div style="font-size:8px;color:var(--t3);letter-spacing:1px">SCAN CYCLE</div><div id="clock" style="font-size:11px;color:var(--blue)">—</div></div>
     <div class="dot"></div>
@@ -143,22 +155,12 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px
 <!-- MAP -->
 <div class="map-wrap">
   <div id="map" style="width:100%;height:100%"></div>
-  <div class="wlayer-panel" id="wlayer-panel">
-    <div class="wlayer-btn" data-layer="temp_new" onclick="toggleWLayer(this)">
-      <span class="wl-icon">🌡</span>Temperature<span class="wl-dot" style="background:#f87171"></span>
-    </div>
-    <div class="wlayer-btn" data-layer="pressure_new" onclick="toggleWLayer(this)">
-      <span class="wl-icon">🔵</span>Pressure<span class="wl-dot" style="background:#60a5fa"></span>
-    </div>
-    <div class="wlayer-btn" data-layer="wind_new" onclick="toggleWLayer(this)">
-      <span class="wl-icon">💨</span>Wind speed<span class="wl-dot" style="background:#22d3ee"></span>
-    </div>
-    <div class="wlayer-btn" data-layer="precipitation_new" onclick="toggleWLayer(this)">
-      <span class="wl-icon">🌧</span>Precipitation<span class="wl-dot" style="background:#8b5cf6"></span>
-    </div>
-    <div class="wlayer-btn" data-layer="clouds_new" onclick="toggleWLayer(this)">
-      <span class="wl-icon">☁</span>Clouds<span class="wl-dot" style="background:#94a3b8"></span>
-    </div>
+  <div class="wlayer-panel">
+    <div class="wlayer-btn" data-layer="temp_new" onclick="toggleWLayer(this)">🌡 Temperature<span class="wl-dot" style="background:#f87171"></span></div>
+    <div class="wlayer-btn" data-layer="pressure_new" onclick="toggleWLayer(this)">🔵 Pressure<span class="wl-dot" style="background:#60a5fa"></span></div>
+    <div class="wlayer-btn" data-layer="wind_new" onclick="toggleWLayer(this)">💨 Wind<span class="wl-dot" style="background:#22d3ee"></span></div>
+    <div class="wlayer-btn" data-layer="precipitation_new" onclick="toggleWLayer(this)">🌧 Rain<span class="wl-dot" style="background:#8b5cf6"></span></div>
+    <div class="wlayer-btn" data-layer="clouds_new" onclick="toggleWLayer(this)">☁ Clouds<span class="wl-dot" style="background:#94a3b8"></span></div>
   </div>
 </div>
 
@@ -166,15 +168,17 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px
 <div class="panel">
   <div class="tabs">
     <button class="tab on" onclick="showTab('scanner',this)">Scanner</button>
+    <button class="tab" onclick="showTab('recs',this)">Recs</button>
     <button class="tab" onclick="showTab('bets',this)">Positions</button>
     <button class="tab" onclick="showTab('perf',this)">Performance</button>
   </div>
-  <div class="panel-body" id="panel-content"><div class="loading">Fetching live data for 35 cities...</div></div>
+  <div class="panel-body" id="panel-content"><div class="loading">Initializing...</div></div>
 </div>
 
 <!-- FOOTER -->
 <div class="footer">
   <div style="font-size:9px;color:var(--t2)" id="fetch-status">Loading...</div>
+  <div style="font-size:7px;color:var(--t3)">Data: Open-Meteo · OpenWeatherMap · Polymarket</div>
   <a href="https://oddsengine.live" class="flink">OddsEngine →</a>
 </div>
 
@@ -183,48 +187,54 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ═══════════════════════════════════════════
-// CITY DATA
+// CITY DATA — with airport offsets
 // ═══════════════════════════════════════════
 const CITIES=[
-{n:"Taipei",lat:25.08,lon:121.23,tz:"Asia/Taipei",u:"C",icao:"RCTP",slug:"taipei",r:"Asia"},
-{n:"Seoul",lat:37.46,lon:126.44,tz:"Asia/Seoul",u:"C",icao:"RKSI",slug:"seoul",r:"Asia",ob:-5.4},
-{n:"Shanghai",lat:31.14,lon:121.81,tz:"Asia/Shanghai",u:"C",icao:"ZSPD",slug:"shanghai",r:"Asia",ob:-4.5},
-{n:"Tokyo",lat:35.55,lon:139.78,tz:"Asia/Tokyo",u:"C",icao:"RJTT",slug:"tokyo",r:"Asia"},
-{n:"Beijing",lat:40.08,lon:116.58,tz:"Asia/Shanghai",u:"C",icao:"ZBAA",slug:"beijing",r:"Asia"},
-{n:"Hong Kong",lat:22.31,lon:113.92,tz:"Asia/Hong_Kong",u:"C",icao:"VHHH",slug:"hong-kong",r:"Asia"},
-{n:"Shenzhen",lat:22.64,lon:113.81,tz:"Asia/Shanghai",u:"C",icao:"ZGSZ",slug:"shenzhen",r:"Asia"},
-{n:"Singapore",lat:1.36,lon:103.99,tz:"Asia/Singapore",u:"C",icao:"WSSS",slug:"singapore",r:"Asia"},
-{n:"Wuhan",lat:30.78,lon:114.21,tz:"Asia/Shanghai",u:"C",icao:"ZHHH",slug:"wuhan",r:"Asia"},
-{n:"Chengdu",lat:30.57,lon:103.95,tz:"Asia/Shanghai",u:"C",icao:"ZUUU",slug:"chengdu",r:"Asia"},
-{n:"Chongqing",lat:29.72,lon:106.63,tz:"Asia/Shanghai",u:"C",icao:"ZUCK",slug:"chongqing",r:"Asia"},
-{n:"Lucknow",lat:26.76,lon:80.89,tz:"Asia/Kolkata",u:"C",icao:"VILK",slug:"lucknow",r:"S.Asia"},
-{n:"London",lat:51.51,lon:0.05,tz:"Europe/London",u:"C",icao:"EGLC",slug:"london",r:"EU"},
-{n:"Madrid",lat:40.47,lon:-3.56,tz:"Europe/Madrid",u:"C",icao:"LEMD",slug:"madrid",r:"EU"},
-{n:"Paris",lat:49.01,lon:2.55,tz:"Europe/Paris",u:"C",icao:"LFPG",slug:"paris",r:"EU"},
-{n:"Ankara",lat:40.12,lon:32.99,tz:"Europe/Istanbul",u:"C",icao:"LTAC",slug:"ankara",r:"EU"},
-{n:"Munich",lat:48.35,lon:11.79,tz:"Europe/Berlin",u:"C",icao:"EDDM",slug:"munich",r:"EU"},
-{n:"Warsaw",lat:52.17,lon:20.97,tz:"Europe/Warsaw",u:"C",icao:"EPWA",slug:"warsaw",r:"EU"},
-{n:"Milan",lat:45.63,lon:8.72,tz:"Europe/Rome",u:"C",icao:"LIMC",slug:"milan",r:"EU"},
-{n:"Tel Aviv",lat:32.01,lon:34.88,tz:"Asia/Jerusalem",u:"C",icao:"LLBG",slug:"tel-aviv",r:"EU"},
-{n:"Buenos Aires",lat:-34.82,lon:-58.54,tz:"America/Argentina/Buenos_Aires",u:"C",icao:"SAEZ",slug:"buenos-aires",r:"S.Am",hasBets:true},
-{n:"Sao Paulo",lat:-23.43,lon:-46.47,tz:"America/Sao_Paulo",u:"C",icao:"SBGR",slug:"sao-paulo",r:"S.Am"},
-{n:"Toronto",lat:43.68,lon:-79.63,tz:"America/Toronto",u:"C",icao:"CYYZ",slug:"toronto",r:"US"},
-{n:"NYC",lat:40.78,lon:-73.87,tz:"America/New_York",u:"F",icao:"KLGA",slug:"nyc",r:"US"},
-{n:"Chicago",lat:41.97,lon:-87.91,tz:"America/Chicago",u:"F",icao:"KORD",slug:"chicago",r:"US"},
-{n:"Atlanta",lat:33.64,lon:-84.43,tz:"America/New_York",u:"F",icao:"KATL",slug:"atlanta",r:"US"},
-{n:"Miami",lat:25.80,lon:-80.29,tz:"America/New_York",u:"F",icao:"KMIA",slug:"miami",r:"US"},
-{n:"Houston",lat:29.76,lon:-95.36,tz:"America/Chicago",u:"F",icao:"KHOU",slug:"houston",r:"US"},
-{n:"Dallas",lat:32.85,lon:-96.85,tz:"America/Chicago",u:"F",icao:"KDAL",slug:"dallas",r:"US"},
-{n:"Austin",lat:30.19,lon:-97.67,tz:"America/Chicago",u:"F",icao:"KAUS",slug:"austin",r:"US"},
-{n:"Denver",lat:39.86,lon:-104.67,tz:"America/Denver",u:"F",icao:"KBKF",slug:"denver",r:"US"},
-{n:"Los Angeles",lat:33.94,lon:-118.41,tz:"America/Los_Angeles",u:"F",icao:"KLAX",slug:"los-angeles",r:"US"},
-{n:"San Francisco",lat:37.62,lon:-122.38,tz:"America/Los_Angeles",u:"F",icao:"KSFO",slug:"san-francisco",r:"US"},
-{n:"Seattle",lat:47.45,lon:-122.31,tz:"America/Los_Angeles",u:"F",icao:"KSEA",slug:"seattle",r:"US"},
-{n:"Wellington",lat:-41.33,lon:174.81,tz:"Pacific/Auckland",u:"C",icao:"NZWN",slug:"wellington",r:"OC"}
+{n:"Taipei",lat:25.08,lon:121.23,tz:"Asia/Taipei",u:"C",icao:"RCTP",slug:"taipei",r:"Asia",off:0},
+{n:"Seoul",lat:37.46,lon:126.44,tz:"Asia/Seoul",u:"C",icao:"RKSI",slug:"seoul",r:"Asia",off:-8.9},
+{n:"Shanghai",lat:31.14,lon:121.81,tz:"Asia/Shanghai",u:"C",icao:"ZSPD",slug:"shanghai",r:"Asia",off:-5.7},
+{n:"Tokyo",lat:35.55,lon:139.78,tz:"Asia/Tokyo",u:"C",icao:"RJTT",slug:"tokyo",r:"Asia",off:0},
+{n:"Beijing",lat:40.08,lon:116.58,tz:"Asia/Shanghai",u:"C",icao:"ZBAA",slug:"beijing",r:"Asia",off:0},
+{n:"Hong Kong",lat:22.31,lon:113.92,tz:"Asia/Hong_Kong",u:"C",icao:"VHHH",slug:"hong-kong",r:"Asia",off:0},
+{n:"Shenzhen",lat:22.64,lon:113.81,tz:"Asia/Shanghai",u:"C",icao:"ZGSZ",slug:"shenzhen",r:"Asia",off:-1.9},
+{n:"Singapore",lat:1.36,lon:103.99,tz:"Asia/Singapore",u:"C",icao:"WSSS",slug:"singapore",r:"Asia",off:0},
+{n:"Wuhan",lat:30.78,lon:114.21,tz:"Asia/Shanghai",u:"C",icao:"ZHHH",slug:"wuhan",r:"Asia",off:0},
+{n:"Chengdu",lat:30.57,lon:103.95,tz:"Asia/Shanghai",u:"C",icao:"ZUUU",slug:"chengdu",r:"Asia",off:0},
+{n:"Chongqing",lat:29.72,lon:106.63,tz:"Asia/Shanghai",u:"C",icao:"ZUCK",slug:"chongqing",r:"Asia",off:0},
+{n:"Lucknow",lat:26.76,lon:80.89,tz:"Asia/Kolkata",u:"C",icao:"VILK",slug:"lucknow",r:"S.Asia",off:0},
+{n:"London",lat:51.51,lon:0.05,tz:"Europe/London",u:"C",icao:"EGLC",slug:"london",r:"EU",off:0},
+{n:"Madrid",lat:40.47,lon:-3.56,tz:"Europe/Madrid",u:"C",icao:"LEMD",slug:"madrid",r:"EU",off:0},
+{n:"Paris",lat:49.01,lon:2.55,tz:"Europe/Paris",u:"C",icao:"LFPG",slug:"paris",r:"EU",off:0},
+{n:"Ankara",lat:40.12,lon:32.99,tz:"Europe/Istanbul",u:"C",icao:"LTAC",slug:"ankara",r:"EU",off:-1.4},
+{n:"Munich",lat:48.35,lon:11.79,tz:"Europe/Berlin",u:"C",icao:"EDDM",slug:"munich",r:"EU",off:0},
+{n:"Warsaw",lat:52.17,lon:20.97,tz:"Europe/Warsaw",u:"C",icao:"EPWA",slug:"warsaw",r:"EU",off:0},
+{n:"Milan",lat:45.63,lon:8.72,tz:"Europe/Rome",u:"C",icao:"LIMC",slug:"milan",r:"EU",off:0},
+{n:"Tel Aviv",lat:32.01,lon:34.88,tz:"Asia/Jerusalem",u:"C",icao:"LLBG",slug:"tel-aviv",r:"EU",off:0},
+{n:"Buenos Aires",lat:-34.82,lon:-58.54,tz:"America/Argentina/Buenos_Aires",u:"C",icao:"SAEZ",slug:"buenos-aires",r:"S.Am",off:0},
+{n:"Sao Paulo",lat:-23.43,lon:-46.47,tz:"America/Sao_Paulo",u:"C",icao:"SBGR",slug:"sao-paulo",r:"S.Am",off:0},
+{n:"Toronto",lat:43.68,lon:-79.63,tz:"America/Toronto",u:"C",icao:"CYYZ",slug:"toronto",r:"US",off:0},
+{n:"NYC",lat:40.78,lon:-73.87,tz:"America/New_York",u:"F",icao:"KLGA",slug:"nyc",r:"US",off:0},
+{n:"Chicago",lat:41.97,lon:-87.91,tz:"America/Chicago",u:"F",icao:"KORD",slug:"chicago",r:"US",off:0},
+{n:"Atlanta",lat:33.64,lon:-84.43,tz:"America/New_York",u:"F",icao:"KATL",slug:"atlanta",r:"US",off:0},
+{n:"Miami",lat:25.80,lon:-80.29,tz:"America/New_York",u:"F",icao:"KMIA",slug:"miami",r:"US",off:0},
+{n:"Houston",lat:29.76,lon:-95.36,tz:"America/Chicago",u:"F",icao:"KHOU",slug:"houston",r:"US",off:0},
+{n:"Dallas",lat:32.85,lon:-96.85,tz:"America/Chicago",u:"F",icao:"KDAL",slug:"dallas",r:"US",off:0},
+{n:"Austin",lat:30.19,lon:-97.67,tz:"America/Chicago",u:"F",icao:"KAUS",slug:"austin",r:"US",off:0},
+{n:"Denver",lat:39.86,lon:-104.67,tz:"America/Denver",u:"F",icao:"KBKF",slug:"denver",r:"US",off:0},
+{n:"Los Angeles",lat:33.94,lon:-118.41,tz:"America/Los_Angeles",u:"F",icao:"KLAX",slug:"los-angeles",r:"US",off:0},
+{n:"San Francisco",lat:37.62,lon:-122.38,tz:"America/Los_Angeles",u:"F",icao:"KSFO",slug:"san-francisco",r:"US",off:0},
+{n:"Seattle",lat:47.45,lon:-122.31,tz:"America/Los_Angeles",u:"F",icao:"KSEA",slug:"seattle",r:"US",off:0},
+{n:"Wellington",lat:-41.33,lon:174.81,tz:"Pacific/Auckland",u:"C",icao:"NZWN",slug:"wellington",r:"OC",off:0}
 ];
 
-const DATE='2026-03-29';
-let weatherData={}, marketData={}, currentTab='scanner', currentFilter='all';
+const OWM_KEY='e75a83526c2d947cd221d23a0e3e6ad2';
+const POSITIONS_API='https://oddsengine-weather-api-production.up.railway.app/positions';
+const MONTHS={1:'january',2:'february',3:'march',4:'april',5:'may',6:'june',7:'july',8:'august',9:'september',10:'october',11:'november',12:'december'};
+
+let selectedDate='';
+let weatherData={}, owmData={}, marketData={}, positionsData=[], positionsLoaded=false;
+let currentTab='scanner', currentFilter='all';
+let dateButtons=[];
 
 // ═══════════════════════════════════════════
 // MAP INIT
@@ -232,26 +242,15 @@ let weatherData={}, marketData={}, currentTab='scanner', currentFilter='all';
 const map=L.map('map',{zoomControl:true,attributionControl:false,minZoom:2,maxZoom:10}).setView([25,20],2.5);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
 
-// ═══════════════════════════════════════════
-// OWM WEATHER LAYERS
-// ═══════════════════════════════════════════
-const OWM_KEY='e75a83526c2d947cd221d23a0e3e6ad2';
 const owmLayers={};
 ['temp_new','pressure_new','wind_new','precipitation_new','clouds_new'].forEach(layer=>{
-  owmLayers[layer]=L.tileLayer(`https://tile.openweathermap.org/map/${layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`,{
-    maxZoom:19,opacity:0.6,attribution:'OpenWeatherMap'
-  });
+  owmLayers[layer]=L.tileLayer(`https://tile.openweathermap.org/map/${layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`,{maxZoom:19,opacity:0.55});
 });
 
 function toggleWLayer(btn){
   const layer=btn.dataset.layer;
-  if(btn.classList.contains('on')){
-    btn.classList.remove('on');
-    map.removeLayer(owmLayers[layer]);
-  }else{
-    btn.classList.add('on');
-    owmLayers[layer].addTo(map);
-  }
+  btn.classList.toggle('on');
+  btn.classList.contains('on')?owmLayers[layer].addTo(map):map.removeLayer(owmLayers[layer]);
 }
 
 const markers={};
@@ -263,14 +262,7 @@ function tempColor(t){
 
 function addCityMarkers(){
   CITIES.forEach(c=>{
-    const col=tempColor(20);
-    const icon=L.divIcon({
-      className:'',
-      html:`<div class="city-marker" style="width:28px;height:28px;background:${col}44;border-color:${col}">`+
-           `<span style="font-size:9px">—</span></div>`+
-           `<div class="city-label" style="position:absolute;top:30px;left:50%;transform:translateX(-50%)">${c.n}</div>`,
-      iconSize:[28,42],iconAnchor:[14,14]
-    });
+    const icon=L.divIcon({className:'',html:`<div class="city-marker" style="width:28px;height:28px;background:#33445566;border-color:#334455"><span style="font-size:9px">—</span></div><div class="city-label" style="position:absolute;top:30px;left:50%;transform:translateX(-50%)">${c.n}</div>`,iconSize:[28,42],iconAnchor:[14,14]});
     const m=L.marker([c.lat,c.lon],{icon}).addTo(map);
     m.cityData=c;
     m.on('click',()=>selectCity(c.n));
@@ -278,119 +270,249 @@ function addCityMarkers(){
   });
 }
 
-function updateMarker(name,temp,rain){
+function updateMarker(name,temp,rain,hasEdge){
   const m=markers[name];if(!m)return;
   const c=m.cityData;
   const col=tempColor(temp);
-  const u=c.u==='F'?'°F':'°C';
-  const display=c.u==='F'?Math.round(temp*9/5+32)+u:Math.round(temp)+u;
   const rainDot=rain>3?'🌧':'';
-  const hasBet=c.hasBets||['Munich','Ankara'].includes(name);
-  const ring=hasBet?`box-shadow:0 0 0 3px ${col}44,0 0 12px ${col}33`:'';
-  
-  m.setIcon(L.divIcon({
-    className:'',
-    html:`<div class="city-marker" style="width:32px;height:32px;background:${col}55;border-color:${col};${ring}">`+
-         `<span style="font-size:10px">${Math.round(temp)}</span></div>`+
-         `<div class="city-label" style="position:absolute;top:34px;left:50%;transform:translateX(-50%)">${name} ${rainDot}</div>`,
-    iconSize:[32,48],iconAnchor:[16,16]
-  }));
-}
-
-function selectCity(name){
-  const d=weatherData[name];
-  if(!d)return;
-  const c=CITIES.find(x=>x.n===name);
-  const mk=marketData[name];
-  const v=getVerdict(d);
-  const u=c.u==='F'?'°F':'°C';
-  const peakDisplay=c.u==='F'?Math.round(d.peak*9/5+32)+'°F':d.peak+'°C';
-  
-  let html=`<div style="font-size:15px;font-weight:700;color:#fff;font-family:var(--sans)">${name}</div>`+
-    `<div style="font-size:9px;color:var(--t2);margin:2px 0">${c.icao} · ${c.r}</div>`+
-    `<div style="font-size:24px;font-weight:800;color:${tempColor(d.peak)};font-family:var(--sans);margin:4px 0">${peakDisplay}</div>`+
-    `<div style="font-size:9px;color:var(--t2)">Peak @${d.peakH}:00 · Rain: ${d.totalRain}mm · Cloud@peak: ${d.avgPeakCloud}%</div>`+
-    `<div class="verdict ${v.cls}" style="margin-top:4px">${v.text}</div>`;
-  if(mk){
-    html+=`<div style="font-size:9px;color:var(--t2);margin-top:6px;padding-top:6px;border-top:1px solid var(--bdr)">Market: <b style="color:var(--t1)">${mk.t1}</b> @${mk.p1}%</div>`;
-  }
-  
-  const popup=L.popup({className:'city-popup',maxWidth:260}).setLatLng([c.lat,c.lon]).setContent(html);
-  popup.openOn(map);
+  const edgeRing=hasEdge?`box-shadow:0 0 0 3px ${col}44,0 0 14px rgba(30,144,255,.3)`:'';
+  m.setIcon(L.divIcon({className:'',html:`<div class="city-marker" style="width:32px;height:32px;background:${col}55;border-color:${col};${edgeRing}"><span style="font-size:10px">${Math.round(temp)}</span></div><div class="city-label" style="position:absolute;top:34px;left:50%;transform:translateX(-50%)">${name} ${rainDot}</div>`,iconSize:[32,48],iconAnchor:[16,16]}));
 }
 
 addCityMarkers();
 
 // ═══════════════════════════════════════════
+// DATE MANAGEMENT
+// ═══════════════════════════════════════════
+function getDateStr(offset){
+  const d=new Date();d.setDate(d.getDate()+offset);
+  return d.toISOString().split('T')[0];
+}
+function formatDateShort(ds){
+  const d=new Date(ds+'T12:00:00');
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
+}
+function dateToSlugPart(ds){
+  const p=ds.split('-');
+  return `${MONTHS[parseInt(p[1])]}-${parseInt(p[2])}-${p[0]}`;
+}
+
+function buildDateNav(){
+  const nav=document.getElementById('date-nav');
+  let html='<button class="date-arrow" onclick="shiftDates(-3)">◀</button>';
+  // Show 7 days starting from tomorrow
+  for(let i=1;i<=7;i++){
+    const ds=getDateStr(i);
+    const label=formatDateShort(ds);
+    const isSelected=ds===selectedDate;
+    html+=`<button class="date-btn ${isSelected?'on':''}" data-date="${ds}" onclick="selectDate('${ds}')">${label}</button>`;
+  }
+  html+='<button class="date-arrow" onclick="shiftDates(3)">▶</button>';
+  nav.innerHTML=html;
+}
+
+function selectDate(ds){
+  selectedDate=ds;
+  buildDateNav();
+  loadAllData();
+}
+
+let dateOffset=0;
+function shiftDates(delta){dateOffset+=delta;buildDateNav();}
+
+// ═══════════════════════════════════════════
 // DATA FETCHING
 // ═══════════════════════════════════════════
-async function fetchWeather(){
+async function fetchWeatherOM(){
+  weatherData={};
   let done=0;
+  const endDate=getDateStr(7); // fetch 7 days at once
   for(let i=0;i<CITIES.length;i+=5){
     const batch=CITIES.slice(i,i+5);
     await Promise.all(batch.map(async c=>{
       try{
-        const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m&start_date=${DATE}&end_date=${DATE}&timezone=${encodeURIComponent(c.tz)}`);
+        const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m&start_date=${selectedDate}&end_date=${selectedDate}&timezone=${encodeURIComponent(c.tz)}`);
         const d=await r.json();const h=d.hourly||{};
         const temps=h.temperature_2m||[],precip=h.precipitation||[],clouds=h.cloud_cover||[],wind=h.wind_speed_10m||[];
         if(!temps.length)return;
         const peak=Math.max(...temps),peakH=temps.indexOf(peak);
         const totalRain=Math.round(precip.reduce((a,b)=>a+b,0)*10)/10;
+        const peakRain=Math.round(precip.slice(10,16).reduce((a,b)=>a+b,0)*10)/10;
         const amRain=Math.round(precip.slice(6,12).reduce((a,b)=>a+b,0)*10)/10;
         const pmRain=Math.round(precip.slice(12,18).reduce((a,b)=>a+b,0)*10)/10;
-        const peakRain=Math.round(precip.slice(10,16).reduce((a,b)=>a+b,0)*10)/10;
         const pc=clouds.slice(10,16);
         const avgPeakCloud=pc.length?Math.round(pc.reduce((a,b)=>a+b,0)/pc.length):0;
         
-        weatherData[c.n]={temps,precip,clouds,wind,peak:Math.round(peak*10)/10,peakH,
-          totalRain,amRain,pmRain,peakRain,avgPeakCloud,maxWind:Math.round(Math.max(...wind)*10)/10};
-        updateMarker(c.n,peak,totalRain);
+        // Apply airport offset
+        const adjPeak=Math.round((peak+(c.off||0))*10)/10;
+        // Apply rain adjustment: -3°C if >3mm during peak hours
+        const rainAdj=peakRain>3?-3:(peakRain>1?-1:0);
+        const finalPeak=Math.round((adjPeak+rainAdj)*10)/10;
+        
+        weatherData[c.n]={temps,precip,clouds,wind,rawPeak:peak,peak:adjPeak,finalPeak,peakH,
+          totalRain,amRain,pmRain,peakRain,avgPeakCloud,rainAdj,
+          maxWind:Math.round(Math.max(...wind)*10)/10,offset:c.off||0};
+        
+        updateMarker(c.n,finalPeak,totalRain,false);
       }catch(e){}
       done++;
-      document.getElementById('fetch-status').textContent=`Weather: ${done}/${CITIES.length}`;
+      document.getElementById('fetch-status').textContent=`Open-Meteo: ${done}/${CITIES.length}`;
+    }));
+  }
+}
+
+async function fetchWeatherOWM(){
+  owmData={};
+  let done=0;
+  for(let i=0;i<CITIES.length;i+=5){
+    const batch=CITIES.slice(i,i+5);
+    await Promise.all(batch.map(async c=>{
+      try{
+        const r=await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${c.lat}&lon=${c.lon}&units=metric&appid=${OWM_KEY}`);
+        const d=await r.json();
+        if(!d.list)return;
+        // Find entries matching selectedDate
+        const dayEntries=d.list.filter(e=>e.dt_txt.startsWith(selectedDate));
+        if(!dayEntries.length)return;
+        const temps=dayEntries.map(e=>e.main.temp_max);
+        const peak=Math.max(...temps);
+        const rain=dayEntries.reduce((a,e)=>a+((e.rain&&e.rain['3h'])||0),0);
+        const adjPeak=Math.round((peak+(c.off||0))*10)/10;
+        owmData[c.n]={peak,adjPeak,rain:Math.round(rain*10)/10,entries:dayEntries.length};
+      }catch(e){}
+      done++;
+      document.getElementById('fetch-status').textContent=`OWM: ${done}/${CITIES.length}`;
     }));
   }
 }
 
 async function fetchMarkets(){
+  marketData={};
   let done=0;
-  const mo={'03':'march','04':'april'};
-  const p=DATE.split('-');
-  const datePart=`${mo[p[1]]}-${parseInt(p[2])}-${p[0]}`;
+  const slugDate=dateToSlugPart(selectedDate);
   
   for(const c of CITIES){
     try{
-      const slug=`highest-temperature-in-${c.slug}-on-${datePart}`;
+      const slug=`highest-temperature-in-${c.slug}-on-${slugDate}`;
       const r=await fetch(`https://gamma-api.polymarket.com/events/slug/${slug}`);
-      if(r.status!==200)continue;
+      if(r.status!==200){done++;continue;}
       const ev=await r.json();
-      let best=null;
+      const mkts=[];
       for(const m of(ev.markets||[])){
         try{
           const pr=JSON.parse(m.outcomePrices||'[]');
           const p0=parseFloat(pr[0]);
-          if(!best||p0>best.p)best={t:m.groupItemTitle,p:p0};
+          const title=m.groupItemTitle||'';
+          mkts.push({title,price:Math.round(p0*1000)/10,raw:p0});
         }catch(e){}
       }
-      if(best)marketData[c.n]={t1:best.t,p1:Math.round(best.p*1000)/10,vol:ev.volume||0};
+      mkts.sort((a,b)=>b.price-a.price);
+      if(mkts.length)marketData[c.n]={markets:mkts,vol:ev.volume||0,hasMarket:true};
     }catch(e){}
     done++;
     document.getElementById('fetch-status').textContent=`Markets: ${done}/${CITIES.length}`;
   }
 }
 
+async function fetchPositions(){
+  try{
+    const r=await fetch(POSITIONS_API);
+    if(!r.ok)throw new Error('API '+r.status);
+    const raw=await r.json();
+    // Proxy already filters weather-only positions
+    positionsData=raw.map(p=>{
+      const title=p.title||p.market||p.question||'';
+      let city='Unknown',temp='?',date='';
+      const cm=title.match(/temperature in ([A-Za-z\s]+?)(?:\s+be|\s+on)/i);if(cm)city=cm[1].trim();
+      const tm=title.match(/be\s+([\d≤≥<>]+\s*°[CF])/i);if(tm)temp=tm[1];
+      const dm=title.match(/on\s+([A-Za-z]+\s+\d+)/i);if(dm)date=dm[1];
+      const size=parseFloat(p.size||p.amount||0);
+      const avgPrice=parseFloat(p.avgPrice||p.price||0);
+      const cost=size*avgPrice;
+      const curPrice=parseFloat(p.curPrice||p.currentPrice||avgPrice);
+      const resolved=p.closed||p.resolved||(curPrice===0||curPrice===1);
+      const won=curPrice>=0.99;
+      const payout=won?size:0;
+      return{city,temp,date,cost,payout,pnl:resolved?(payout-cost):0,size,avgPrice,curPrice,status:resolved?'resolved':'active',title};
+    });
+    positionsLoaded=true;
+  }catch(e){positionsLoaded=true;}
+}
+
+// ═══════════════════════════════════════════
+// EDGE DETECTION
+// ═══════════════════════════════════════════
+function getEdge(cityName){
+  const w=weatherData[cityName];
+  const o=owmData[cityName];
+  const mk=marketData[cityName];
+  const c=CITIES.find(x=>x.n===cityName);
+  if(!w)return null;
+  
+  // Our adjusted forecast (average of sources if both available)
+  let ourForecast=w.finalPeak;
+  let sources=[{name:'OM',val:w.finalPeak,raw:w.rawPeak}];
+  if(o){
+    const owmAdj=Math.round((o.adjPeak+(w.rainAdj||0))*10)/10;
+    sources.push({name:'OWM',val:owmAdj,raw:o.peak});
+    ourForecast=Math.round(((w.finalPeak+owmAdj)/2)*10)/10;
+  }
+  
+  // Convert to display unit
+  const displayTemp=c.u==='F'?Math.round(ourForecast*9/5+32):Math.round(ourForecast);
+  const unit=c.u==='F'?'°F':'°C';
+  
+  let verdict='SKIP', edgeLevel=0, cheapTemps=[], edgeColor='var(--t3)';
+  
+  if(mk&&mk.hasMarket){
+    // Find market consensus (highest-priced temp)
+    const consensus=mk.markets[0];
+    // Find cheap temps near our forecast
+    const nearTemps=mk.markets.filter(m=>{
+      // Parse temp from title like "4°C" or "72°F"
+      const match=m.title.match(/([\d]+)/);
+      if(!match)return false;
+      const mTemp=parseInt(match[1]);
+      const diff=Math.abs(mTemp-displayTemp);
+      return diff<=3&&m.price<15; // within 3 degrees and cheap (<15%)
+    });
+    
+    cheapTemps=nearTemps;
+    
+    // Edge scoring
+    if(nearTemps.length>0){
+      const cheapest=nearTemps.filter(t=>t.price<8);
+      if(cheapest.length>0){verdict='BUY';edgeLevel=3;edgeColor='var(--green)';}
+      else{verdict='EDGE';edgeLevel=2;edgeColor='var(--blue)';}
+    }
+    
+    // Check if consensus matches our forecast
+    const consMatch=consensus.title.match(/([\d]+)/);
+    if(consMatch){
+      const consTemp=parseInt(consMatch[1]);
+      if(Math.abs(consTemp-displayTemp)>=3){
+        verdict=verdict==='SKIP'?'EDGE':verdict;
+        edgeLevel=Math.max(edgeLevel,2);
+        edgeColor='var(--blue)';
+      }
+    }
+  }
+  
+  // Rain edge: heavy rain suppresses peak but market might not price it in
+  if(w.peakRain>3&&mk&&mk.hasMarket){
+    verdict='RAIN EDGE';edgeLevel=2;edgeColor='var(--violet)';
+  }
+  
+  return{ourForecast,displayTemp,unit,sources,verdict,edgeLevel,edgeColor,cheapTemps,
+    rain:w.totalRain,peakRain:w.peakRain,rainAdj:w.rainAdj,offset:w.offset,
+    hasMarket:!!(mk&&mk.hasMarket)};
+}
+
 // ═══════════════════════════════════════════
 // UI RENDERING
 // ═══════════════════════════════════════════
-function getVerdict(d){
-  if(!d)return{text:'NO DATA',cls:'v-warn'};
-  if(d.totalRain===0)return{text:'☀ DRY',cls:'v-safe'};
-  if(d.peakRain>2)return{text:`🌧 RAIN@PEAK (${d.peakRain}mm)`,cls:'v-rain'};
-  if(d.amRain>1&&d.pmRain<.5)return{text:`AM rain → peak safe`,cls:'v-warn'};
-  if(d.pmRain>1)return{text:`PM rain (${d.pmRain}mm)`,cls:'v-rain'};
-  return{text:`Light (${d.totalRain}mm)`,cls:'v-safe'};
-}
-
 function rainColor(mm){
   if(mm===0)return'transparent';
   if(mm<.5)return'rgba(139,92,246,.2)';if(mm<2)return'rgba(139,92,246,.4)';
@@ -398,25 +520,38 @@ function rainColor(mm){
 }
 
 function renderTicker(){
-  let h='';
-  Object.entries(weatherData).forEach(([n,d])=>{
-    const c=CITIES.find(x=>x.n===n);
-    const u=c?.u==='F'?'°F':'°C';
-    const t=c?.u==='F'?Math.round(d.peak*9/5+32):Math.round(d.peak);
-    const col=tempColor(d.peak);
-    h+=`<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)"><b style="color:var(--t1)">${n}</b><span style="color:${col};font-weight:600">${t}${u}</span>${d.totalRain>0?`<span style="color:var(--violet);font-size:8px">🌧${d.totalRain}mm</span>`:''}·</span>`;
-  });
-  document.getElementById('ticker').innerHTML=h+h;
+  let items=CITIES.map(c=>{
+    const d=weatherData[c.n];if(!d)return'';
+    const u=c.u==='F'?'°F':'°C';
+    const display=c.u==='F'?Math.round(d.finalPeak*9/5+32)+u:d.finalPeak+u;
+    const rainIcon=d.totalRain>3?`<span style="color:var(--violet)">🌧${d.totalRain}mm</span>`:'';
+    const e=getEdge(c.n);
+    const edgeIcon=e&&e.edgeLevel>=2?`<span style="color:${e.edgeColor}">⚡</span>`:'';
+    return `<span>${edgeIcon}<b style="color:#fff">${c.n}</b> <span style="color:${tempColor(d.finalPeak)}">${display}</span> ${rainIcon}</span>`;
+  }).filter(Boolean).join('');
+  document.getElementById('ticker').innerHTML=items+items;
 }
 
 function renderStats(){
   const rain=Object.values(weatherData).filter(d=>d.totalRain>3).length;
   const dry=Object.values(weatherData).filter(d=>d.totalRain===0).length;
-  const peak=Object.values(weatherData).filter(d=>d.peakRain>2).length;
+  const edges=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=2).length;
+  const marketsAvail=Object.keys(marketData).length;
+  
+  const resolved=positionsData.filter(p=>p.status==='resolved');
+  const active=positionsData.filter(p=>p.status==='active');
+  const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
+  const totalInv=resolved.reduce((a,b)=>a+b.cost,0);
+  const roi=totalInv>0?((totalPnl/totalInv)*100):0;
+  
   document.getElementById('stats-bar').innerHTML=[
-    {l:'WALLET',v:'$86.16',c:'var(--green)'},{l:'NET P&L',v:'+$55',c:'var(--green)'},{l:'ROI',v:'+311%',c:'var(--green)'},
-    {l:'INVESTED',v:'$19.14',c:'var(--t1)'},{l:'RAIN >3mm',v:rain,c:'var(--violet)'},
-    {l:'RAIN@PEAK',v:peak,c:'var(--red)'},{l:'DRY',v:dry,c:'var(--bluel)'}
+    {l:'NET P&L',v:positionsLoaded?`${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toFixed(0)}`:'—',c:totalPnl>=0?'var(--green)':'var(--red)'},
+    {l:'ROI',v:positionsLoaded?`${roi>=0?'+':''}${roi.toFixed(0)}%`:'—',c:roi>=0?'var(--green)':'var(--red)'},
+    {l:'EDGES',v:edges,c:edges>0?'var(--green)':'var(--t2)'},
+    {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
+    {l:'RAIN>3mm',v:rain,c:'var(--violet)'},
+    {l:'DRY',v:dry,c:'var(--bluel)'},
+    {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
   ].map(s=>`<div class="stat"><div class="stat-l">${s.l}</div><div class="stat-v" style="color:${s.c}">${s.v}</div></div>`).join('');
 }
 
@@ -430,153 +565,234 @@ function showTab(tab,btn){
 function renderPanel(){
   const el=document.getElementById('panel-content');
   if(currentTab==='scanner')renderScanner(el);
+  else if(currentTab==='recs')renderRecs(el);
   else if(currentTab==='bets')renderBets(el);
   else renderPerf(el);
 }
 
 function renderScanner(el){
-  const sorted=[...CITIES].map(c=>{
-    const d=weatherData[c.n];const mk=marketData[c.n];
-    return{...c,w:d,mk,rain:d?d.totalRain:0,peakRain:d?d.peakRain:0,peak:d?d.peak:0};
-  }).sort((a,b)=>{
-    if(a.peakRain>2&&b.peakRain<=2)return-1;if(b.peakRain>2&&a.peakRain<=2)return 1;
-    if(a.rain>3&&b.rain<=3)return-1;if(b.rain>3&&a.rain<=3)return 1;
-    return(b.mk?.vol||0)-(a.mk?.vol||0);
+  const sorted=CITIES.map(c=>{
+    const d=weatherData[c.n];const e=getEdge(c.n);const mk=marketData[c.n];
+    return{city:c,data:d,edge:e,mk};
+  }).filter(x=>x.data).sort((a,b)=>{
+    // Sort: edges first, then by edge level, then rain
+    const ea=a.edge?a.edge.edgeLevel:0;
+    const eb=b.edge?b.edge.edgeLevel:0;
+    if(ea!==eb)return eb-ea;
+    return(b.data.peakRain||0)-(a.data.peakRain||0);
   });
-  
+
+  // Filters
   let html=`<div class="filters">
     <button class="fbtn ${currentFilter==='all'?'on':''}" onclick="setFilter('all')">All</button>
+    <button class="fbtn ${currentFilter==='edge'?'on':''}" onclick="setFilter('edge')">⚡ Edge</button>
     <button class="fbtn ${currentFilter==='rain'?'on':''}" onclick="setFilter('rain')">🌧 Rain</button>
     <button class="fbtn ${currentFilter==='dry'?'on':''}" onclick="setFilter('dry')">☀ Dry</button>
-    <button class="fbtn ${currentFilter==='bet'?'on':''}" onclick="setFilter('bet')">💰 Our Bets</button>
+    <button class="fbtn ${currentFilter==='market'?'on':''}" onclick="setFilter('market')">📊 Markets</button>
   </div>`;
-  
-  let lastSection='';
-  sorted.forEach((c,i)=>{
-    const d=c.w;if(!d)return;
-    const isRain=d.totalRain>3;const isDry=d.totalRain===0;
-    const hasBet=c.hasBets||['Munich','Ankara'].includes(c.n);
-    
-    if(currentFilter==='rain'&&!isRain)return;
-    if(currentFilter==='dry'&&!isDry)return;
-    if(currentFilter==='bet'&&!hasBet)return;
-    
-    const section=d.peakRain>2?'rain@peak':isRain?'rain':'other';
-    if(section!==lastSection){
-      const labels={'rain@peak':'🌧 RAIN DURING PEAK','rain':'🌧 RAIN CITIES','other':'ALL CITIES'};
-      html+=`<div class="section-label">${labels[section]||section}</div>`;
-      lastSection=section;
-    }
-    
-    const v=getVerdict(d);
+
+  let filtered=sorted;
+  if(currentFilter==='edge')filtered=sorted.filter(x=>x.edge&&x.edge.edgeLevel>=2);
+  if(currentFilter==='rain')filtered=sorted.filter(x=>x.data.totalRain>3);
+  if(currentFilter==='dry')filtered=sorted.filter(x=>x.data.totalRain===0);
+  if(currentFilter==='market')filtered=sorted.filter(x=>x.mk&&x.mk.hasMarket);
+
+  if(filtered.some(x=>x.edge&&x.edge.edgeLevel>=2)){
+    html+=`<div class="section-label">⚡ EDGE DETECTED</div>`;
+  }
+
+  filtered.forEach(x=>{
+    const{city:c,data:d,edge:e,mk}=x;
+    if(!e)return;
     const u=c.u==='F'?'°F':'°C';
-    const peakD=c.u==='F'?Math.round(d.peak*9/5+32)+u:d.peak+u;
-    const cls=hasBet?'bet':d.peakRain>2?'rain':isRain?'edge':'';
-    const minT=Math.min(...d.temps),maxT=Math.max(...d.temps),range=maxT-minT||1;
+    const display=`${e.displayTemp}${u}`;
+    const cardClass=e.edgeLevel>=3?'edge-strong':e.edgeLevel>=2?'edge-med':e.verdict.includes('RAIN')?'edge-rain':'edge-none';
     
-    html+=`<div class="city-card ${cls}" onclick="flyTo('${c.n}')">
+    html+=`<div class="city-card ${cardClass}" onclick="flyTo('${c.n}')">
       <div class="cc-head">
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="cc-name">${c.n}</span>
-          <span class="tag tag-region">${c.r}</span>
-          ${isRain?`<span class="tag tag-rain">🌧${d.totalRain}mm</span>`:''}
-          ${isDry?`<span class="tag tag-dry">DRY</span>`:''}
-          ${hasBet?`<span class="tag tag-bet">BET</span>`:''}
-        </div>
-        <span class="cc-temp" style="color:${tempColor(d.peak)}">${peakD}</span>
+        <span class="cc-name">${c.n} <span class="tag tag-region">${c.r}</span></span>
+        <span style="font-size:18px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans)">${display}</span>
       </div>
       <div class="cc-meta">
-        <span>Peak @${d.peakH}:00</span>
-        <span>Cloud: ${d.avgPeakCloud}%</span>
-        <span>Wind: ${d.maxWind}km/h</span>
-        ${c.mk?`<span>Mkt: ${c.mk.t1}@${c.mk.p1}%</span>`:''}
-      </div>
-      <div style="font-size:7px;color:var(--t3);display:flex;justify-content:space-between">
-        <span>TEMP</span><span>0h──────6h──────12h──────18h──────23h</span>
-      </div>
-      <div class="temp-row">${d.temps.map((t,j)=>`<div class="temp-fill" style="height:${Math.max(8,((t-minT)/range)*100)}%;background:${tempColor(t)}66;${j===d.peakH?'outline:1px solid var(--amber)':''}" data-tip="${j}:00 ${t}°C"></div>`).join('')}</div>
-      <div style="font-size:7px;color:var(--t3);margin-top:3px">RAIN</div>
-      <div class="rain-row">${d.precip.map((p,j)=>`<div class="rain-bar" style="background:${rainColor(p)}" data-tip="${j}:00 ${p}mm"></div>`).join('')}</div>
-      <div class="time-labels"><span>0</span><span></span><span></span><span></span><span></span><span></span><span>6</span><span></span><span></span><span></span><span></span><span></span><span>12</span><span></span><span></span><span></span><span></span><span></span><span>18</span><span></span><span></span><span></span><span></span><span>23</span></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-        <span class="verdict ${v.cls}">${v.text}</span>
-        ${c.mk?`<span class="mkt-info">${c.mk.t1} @${c.mk.p1}%</span>`:''}
-      </div>
-    </div>`;
+        ${e.sources.map(s=>`<span>${s.name}: ${Math.round(s.val*10)/10}°C</span>`).join('')}
+        ${e.offset?`<span class="src-adj">✈${e.offset>0?'+':''}${e.offset}°C</span>`:''}
+        ${e.rainAdj?`<span class="src-adj">🌧${e.rainAdj}°C</span>`:''}
+        ${d.totalRain>0?`<span class="tag tag-rain">${d.totalRain}mm</span>`:'<span class="tag tag-dry">DRY</span>'}
+      </div>`;
+    
+    // Market prices + edge
+    if(mk&&mk.hasMarket){
+      html+=`<div class="mkt-row">`;
+      mk.markets.slice(0,8).forEach(m=>{
+        const isNear=e.cheapTemps.some(ct=>ct.title===m.title);
+        html+=`<span class="mkt-chip ${isNear&&m.price<8?'hot':isNear?'warm':''}">${m.title} ${m.price}%</span>`;
+      });
+      html+=`</div>`;
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px">
+        <span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='SKIP'?'skip':'lotto'}">${e.verdict}</span>
+        ${e.cheapTemps.length?`<span style="font-size:8px;color:var(--green)">${e.cheapTemps.length} cheap near forecast</span>`:''}
+      </div>`;
+    } else {
+      html+=`<div style="font-size:9px;color:var(--t3);margin-top:2px">No market yet</div>`;
+    }
+    
+    html+=`</div>`;
   });
+
+  if(!filtered.length)html+='<div style="font-size:10px;color:var(--t2);padding:10px">No cities match filter</div>';
+  el.innerHTML=html;
+}
+
+function renderRecs(el){
+  // Actionable recommendations only
+  const edges=CITIES.map(c=>({city:c,edge:getEdge(c.n),data:weatherData[c.n],mk:marketData[c.n]}))
+    .filter(x=>x.edge&&x.edge.edgeLevel>=2&&x.edge.hasMarket)
+    .sort((a,b)=>b.edge.edgeLevel-a.edge.edgeLevel);
+  
+  let html=`<div class="section-label">RECOMMENDATIONS — ${formatDateShort(selectedDate)}</div>`;
+  
+  if(!edges.length){
+    html+=`<div style="padding:15px;text-align:center;color:var(--t2)">
+      <div style="font-size:14px;margin-bottom:5px">No strong edges detected</div>
+      <div style="font-size:10px">Try checking other dates or wait for markets to open</div>
+    </div>`;
+    el.innerHTML=html;return;
+  }
+  
+  edges.forEach(({city:c,edge:e,mk})=>{
+    const u=c.u==='F'?'°F':'°C';
+    html+=`<div class="city-card edge-strong" style="padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div><span class="cc-name" style="font-size:14px">${c.n}</span><span class="tag tag-buy" style="margin-left:8px">${e.verdict}</span></div>
+        <span style="font-size:22px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans)">${e.displayTemp}${u}</span>
+      </div>
+      <div style="font-size:9px;color:var(--t2);margin-bottom:6px">
+        Forecast: ${e.sources.map(s=>`${s.name} ${Math.round(s.val*10)/10}°C`).join(' · ')}
+        ${e.offset?` · Airport ${e.offset>0?'+':''}${e.offset}°C`:''}
+        ${e.rainAdj?` · Rain adj ${e.rainAdj}°C`:''}
+      </div>`;
+    
+    if(e.cheapTemps.length){
+      html+=`<div style="font-size:9px;color:var(--green);font-weight:600;margin-bottom:4px">TARGETS:</div>
+        <div class="mkt-row">`;
+      e.cheapTemps.forEach(t=>{
+        const payout=t.price>0?Math.round((1/t.price*100)*100)/100:0;
+        html+=`<span class="mkt-chip hot">${t.title} @${t.price}% → $${payout}/$ payout</span>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  });
+  
   el.innerHTML=html;
 }
 
 function renderBets(el){
-  const bets=[
-    {city:'Munich',date:'Mar 29',temps:'≤2°C, 3°C, 4°C, 5°C, 6°C',cost:'$9.12',status:'Placed',best:'$200 (3°C)',note:'Google: 4°C + Snow'},
-    {city:'Ankara',date:'Mar 29',temps:'7°C, 8°C, 9°C',cost:'$5.00',status:'Placed',best:'$100 (7°C)',note:'Google: 9°C, airport -1.4°C'},
-    {city:'Buenos Aires',date:'Mar 29',temps:'23-28°C',cost:'$5.02',status:'Open',best:'$3.69',note:'Rain play 10.8mm'},
-  ];
+  if(!positionsLoaded){el.innerHTML='<div class="loading">Fetching positions...</div>';return;}
+  const active=positionsData.filter(p=>p.status==='active');
+  const grouped={};
+  active.forEach(p=>{if(!grouped[p.city])grouped[p.city]=[];grouped[p.city].push(p);});
   
-  let html='<div class="section-label">ACTIVE POSITIONS — MAR 29</div>';
-  bets.forEach(b=>{
-    html+=`<div class="city-card bet">
-      <div class="cc-head"><span class="cc-name">${b.city}</span><span style="font-size:11px;color:var(--green);font-weight:600">${b.cost}</span></div>
-      <div style="font-size:10px;color:var(--t1);margin:3px 0">${b.temps}</div>
-      <div class="cc-meta"><span>Best: ${b.best}</span><span>${b.status}</span></div>
-      <div style="font-size:9px;color:var(--t2)">${b.note}</div>
+  let html=`<div class="section-label">ACTIVE POSITIONS (${active.length})</div>`;
+  if(!active.length)html+='<div style="font-size:10px;color:var(--t2);padding:8px">No active positions</div>';
+  
+  Object.keys(grouped).forEach(city=>{
+    const bets=grouped[city];
+    const totalCost=bets.reduce((a,b)=>a+b.cost,0);
+    html+=`<div class="city-card has-bet">
+      <div class="cc-head"><span class="cc-name">${city}</span><span style="font-size:11px;color:var(--green);font-weight:600">$${totalCost.toFixed(2)}</span></div>
+      <div style="font-size:10px;color:var(--t1);margin:3px 0">${bets.map(b=>b.temp).join(', ')}</div>
+      <div class="cc-meta"><span>${bets[0].date||''}</span><span>${bets.length} positions</span></div>
     </div>`;
   });
   
-  html+=`<div class="section-label">PENDING REDEMPTION</div>
-    <div class="city-card"><div class="cc-head"><span class="cc-name">Seoul 12°C d28</span><span style="color:var(--amber)">~$6.50</span></div>
-    <div style="font-size:9px;color:var(--t2)">Auto-redeem running every 10min</div></div>`;
-  
-  html+=`<div style="margin-top:12px;padding:10px;background:var(--card);border:1px solid var(--bdr);border-radius:6px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
-      <div><span style="color:var(--t2)">Total invested:</span></div><div style="text-align:right;font-weight:600">$19.14</div>
-      <div><span style="color:var(--t2)">Best possible:</span></div><div style="text-align:right;color:var(--green);font-weight:600">$200 (Munich 3°C)</div>
-      <div><span style="color:var(--t2)">Pending redeem:</span></div><div style="text-align:right;color:var(--amber);font-weight:600">~$6.50</div>
-      <div><span style="color:var(--t2)">Available:</span></div><div style="text-align:right;font-weight:600">$86.16</div>
+  const totalInv=active.reduce((a,b)=>a+b.cost,0);
+  const resolved=positionsData.filter(p=>p.status==='resolved');
+  html+=`<div style="margin-top:10px;padding:10px;background:var(--card);border:1px solid var(--bdr);border-radius:6px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">
+      <span style="color:var(--t2)">Active invested:</span><span style="text-align:right;font-weight:600">$${totalInv.toFixed(2)}</span>
+      <span style="color:var(--t2)">Positions:</span><span style="text-align:right;font-weight:600">${active.length} active / ${resolved.length} resolved</span>
     </div></div>`;
-  
   el.innerHTML=html;
 }
 
 function renderPerf(el){
-  const trades=[
-    {d:'Mar 27',n:'Chongqing 17°C',c:'$1.50',p:'$55.56',pl:'+$54.06',w:true},
-    {d:'Mar 27',n:'BA 26°C',c:'$2.10',p:'$30.40',pl:'+$28.30',w:true},
-    {d:'Mar 28',n:'Seoul 12°C',c:'$1.04',p:'$6.50',pl:'+$5.46',w:true},
-    {d:'Mar 28',n:'Seoul 11,15°C',c:'$2.04',p:'$0',pl:'-$2.04',w:false},
-    {d:'Mar 28',n:'Shanghai 19,20,22,23',c:'$5.00',p:'$0',pl:'-$5.00',w:false},
-    {d:'Mar 28',n:'CQ 17,18,20,21',c:'$4.77',p:'$0',pl:'-$4.77',w:false},
-    {d:'Mar 28',n:'Atlanta 74°F+',c:'$1.00',p:'$0',pl:'-$1.00',w:false},
-  ];
+  if(!positionsLoaded){el.innerHTML='<div class="loading">Fetching performance...</div>';return;}
+  const resolved=positionsData.filter(p=>p.status==='resolved');
+  const wins=resolved.filter(p=>p.pnl>0);
+  const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
+  const totalInv=resolved.reduce((a,b)=>a+b.cost,0);
+  const roi=totalInv>0?((totalPnl/totalInv)*100):0;
+  const pnlColor=totalPnl>=0?'var(--green)':'var(--red)';
   
-  let html=`<div style="padding:10px;background:var(--greend);border:1px solid rgba(0,217,126,.2);border-radius:6px;margin-bottom:10px">
+  let html=`<div style="padding:10px;background:${totalPnl>=0?'var(--greend)':'var(--redd)'};border:1px solid ${totalPnl>=0?'rgba(0,217,126,.2)':'rgba(255,71,87,.2)'};border-radius:6px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:2px">NET P&L (WEATHER ONLY)</div>
-      <div style="font-size:28px;font-weight:800;color:var(--green);font-family:var(--sans)">+$55.42</div></div>
-      <div style="text-align:right"><div style="font-size:10px;color:var(--t2)">$22.45 invested</div>
-      <div style="font-size:16px;font-weight:700;color:var(--bluel);font-family:var(--sans)">+311% ROI</div></div>
+      <div><div style="font-size:9px;color:${pnlColor};letter-spacing:1px">NET P&L</div>
+      <div style="font-size:28px;font-weight:800;color:${pnlColor};font-family:var(--sans)">${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toFixed(2)}</div></div>
+      <div style="text-align:right"><div style="font-size:10px;color:var(--t2)">$${totalInv.toFixed(2)} invested</div>
+      <div style="font-size:16px;font-weight:700;color:var(--bluel);font-family:var(--sans)">${roi>=0?'+':''}${roi.toFixed(0)}% ROI</div>
+      <div style="font-size:9px;color:var(--t2)">${wins.length}W / ${resolved.length-wins.length}L</div></div>
     </div></div>`;
   
   html+='<div class="section-label">TRADE HISTORY</div>';
-  trades.forEach(t=>{
+  [...resolved].reverse().forEach(t=>{
+    const w=t.pnl>0;
     html+=`<div class="perf-row">
-      <div><div style="font-size:10px;font-weight:600;color:${t.w?'var(--green)':'var(--red)'}">${t.n}</div>
-      <div style="font-size:8px;color:var(--t3)">${t.d} · ${t.c} → ${t.p}</div></div>
-      <div style="font-size:13px;font-weight:700;color:${t.w?'var(--green)':'var(--red)'};font-family:var(--sans)">${t.pl}</div>
+      <div><div style="font-size:10px;font-weight:600;color:${w?'var(--green)':'var(--red)'}">${t.city} ${t.temp}</div>
+      <div style="font-size:8px;color:var(--t3)">${t.date} · $${t.cost.toFixed(2)} → $${t.payout.toFixed(2)}</div></div>
+      <div style="font-size:13px;font-weight:700;color:${w?'var(--green)':'var(--red)'};font-family:var(--sans)">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)}</div>
     </div>`;
   });
-  
-  html+=`<div class="section-label" style="margin-top:14px">KEY LESSONS</div>
-    <div style="font-size:10px;line-height:1.8;color:var(--t1)">
-      <span style="color:var(--green)">✓</span> TAF TX = gold in DRY<br>
-      <span style="color:var(--red)">✗</span> TAF TX = WRONG in rain (CQ -8°C!)<br>
-      <span style="color:var(--violet)">⚡</span> Rain adj: -3°C for >3mm<br>
-      <span style="color:var(--amber)">⚠</span> NEVER leave gaps in ladder<br>
-      <span style="color:var(--green)">✓</span> Buy cheap (<10¢), skip consensus<br>
-      <span style="color:var(--blue)">→</span> neobrother: ladder at 0.2-15¢ only
-    </div>`;
+  if(!resolved.length)html+='<div style="font-size:10px;color:var(--t2);padding:8px">No resolved trades yet</div>';
   el.innerHTML=html;
+}
+
+function selectCity(name){
+  const d=weatherData[name];if(!d)return;
+  const c=CITIES.find(x=>x.n===name);
+  const e=getEdge(name);
+  const mk=marketData[name];
+  const u=c.u==='F'?'°F':'°C';
+  
+  let html=`<div style="font-size:15px;font-weight:700;color:#fff;font-family:var(--sans)">${name}</div>
+    <div style="font-size:9px;color:var(--t2);margin:2px 0">${c.icao} · ${c.r} · ${formatDateShort(selectedDate)}</div>`;
+  
+  if(e){
+    html+=`<div style="font-size:24px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans);margin:4px 0">${e.displayTemp}${u}</div>`;
+    // Sources
+    html+=`<div style="font-size:9px;color:var(--t2)">`;
+    e.sources.forEach(s=>{html+=`${s.name}: ${Math.round(s.val*10)/10}°C · `;});
+    html+=`Rain: ${d.totalRain}mm`;
+    if(e.offset)html+=` · ✈${e.offset>0?'+':''}${e.offset}°C`;
+    if(e.rainAdj)html+=` · 🌧${e.rainAdj}°C`;
+    html+=`</div>`;
+    
+    if(e.hasMarket){
+      html+=`<div style="margin-top:4px"><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='SKIP'?'skip':'lotto'}">${e.verdict}</span></div>`;
+      if(e.cheapTemps.length){
+        html+=`<div style="font-size:8px;color:var(--green);margin-top:4px">Cheap near forecast:</div>`;
+        e.cheapTemps.forEach(t=>{
+          html+=`<div style="font-size:9px;color:var(--t1)">${t.title} @${t.price}%</div>`;
+        });
+      }
+    } else {
+      html+=`<div style="font-size:9px;color:var(--t3);margin-top:4px">No market for this date</div>`;
+    }
+  }
+  
+  // Show user's positions for this city
+  const myPos=positionsData.filter(p=>p.city.toLowerCase().includes(name.toLowerCase()));
+  if(myPos.length){
+    const active=myPos.filter(p=>p.status==='active');
+    if(active.length){
+      html+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bdr);font-size:8px;color:var(--green);letter-spacing:1px">YOUR POSITIONS</div>`;
+      active.forEach(p=>{
+        html+=`<div style="font-size:9px;display:flex;justify-content:space-between"><span>${p.temp}</span><span style="color:var(--t2)">$${p.cost.toFixed(2)}</span></div>`;
+      });
+    }
+  }
+  
+  L.popup({className:'city-popup',maxWidth:280}).setLatLng([c.lat,c.lon]).setContent(html).openOn(map);
 }
 
 function setFilter(f){
@@ -593,6 +809,46 @@ function flyTo(name){
 }
 
 // ═══════════════════════════════════════════
+// LOAD ALL DATA FOR SELECTED DATE
+// ═══════════════════════════════════════════
+async function loadAllData(){
+  document.getElementById('panel-content').innerHTML='<div class="loading">Fetching forecast for '+formatDateShort(selectedDate)+'...</div>';
+  
+  await fetchWeatherOM();
+  renderTicker();
+  renderStats();
+  renderPanel();
+  
+  document.getElementById('fetch-status').textContent='Fetching OWM forecasts...';
+  await fetchWeatherOWM();
+  
+  // Update markers with edge info
+  CITIES.forEach(c=>{
+    const d=weatherData[c.n];
+    const e=getEdge(c.n);
+    if(d)updateMarker(c.n,d.finalPeak,d.totalRain,e&&e.edgeLevel>=2);
+  });
+  
+  renderPanel();
+  
+  document.getElementById('fetch-status').textContent='Fetching Polymarket prices...';
+  await fetchMarkets();
+  
+  // Re-render with market data
+  CITIES.forEach(c=>{
+    const d=weatherData[c.n];
+    const e=getEdge(c.n);
+    if(d)updateMarker(c.n,d.finalPeak,d.totalRain,e&&e.edgeLevel>=2);
+  });
+  
+  renderStats();
+  renderPanel();
+  
+  const edges=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=2).length;
+  document.getElementById('fetch-status').textContent=`${Object.keys(weatherData).length} cities · ${Object.keys(marketData).length} markets · ${edges} edges · ${formatDateShort(selectedDate)}`;
+}
+
+// ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 setInterval(()=>{
@@ -600,14 +856,13 @@ setInterval(()=>{
 },1000);
 
 async function init(){
-  await fetchWeather();
-  renderTicker();
-  renderStats();
-  renderPanel();
-  document.getElementById('fetch-status').textContent='Fetching market prices...';
-  await fetchMarkets();
-  renderPanel();
-  document.getElementById('fetch-status').textContent=`${Object.keys(weatherData).length} cities · Live data · Open-Meteo + Polymarket`;
+  selectedDate=getDateStr(1); // tomorrow by default
+  buildDateNav();
+  
+  // Fetch positions once (not date-dependent)
+  fetchPositions().then(()=>{renderStats();renderPanel();});
+  
+  await loadAllData();
 }
 init();
 </script>
