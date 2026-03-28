@@ -1,333 +1,614 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Weather Intelligence — OddsEngine</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-:root{--bg:#000;--bg1:#060a10;--bg2:#0a1018;--card:#0c1420;--hover:#0f1a2a;--bdr:#12202e;--bdrh:#1a3050;--t1:#d4dce8;--t2:#5a7090;--t3:#2a3a52;--blue:#1a8cff;--bb:#3da0ff;--bd:rgba(26,140,255,.10);--green:#00d46a;--amber:#f0a020;--red:#f04848;--violet:#8b7aff;--cyan:#18ffff;--mono:'IBM Plex Mono',monospace;--sans:'DM Sans',-apple-system,sans-serif}
-*{margin:0;padding:0;box-sizing:border-box}body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px;overflow:hidden;height:100vh;-webkit-font-smoothing:antialiased}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(26,140,255,.005) 2px,rgba(26,140,255,.005) 4px)}
-@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.hdr{border-bottom:1px solid var(--bdr);padding:10px 20px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--bg2),var(--bg));z-index:10;position:relative}
-.hdr-l{display:flex;align-items:center;gap:12px}.logo{width:30px;height:30px;border-radius:4px}
-.bn{font-size:13px;font-weight:700;letter-spacing:3px;color:#fff;text-transform:uppercase;font-family:var(--sans)}.bn span{color:var(--blue)}
-.bs{font-size:9px;color:var(--t2);letter-spacing:1.5px;margin-top:1px}.ck{font-size:11px;color:var(--blue);font-variant-numeric:tabular-nums}
-.sd{width:7px;height:7px;border-radius:50%;background:var(--blue);animation:pulse 2s infinite}
-.tkr{border-bottom:1px solid var(--bdr);background:var(--bg1);padding:5px 0;overflow:hidden;white-space:nowrap;z-index:10;position:relative}
-.tki{display:inline-flex;gap:32px;animation:marquee 120s linear infinite}
-.sts{display:flex;border-bottom:1px solid var(--bdr);background:var(--bg1)}
-.st{flex:1;padding:10px 16px;border-right:1px solid var(--bdr)}.st:last-child{border-right:none}
-.st-l{font-size:8px;color:var(--t3);letter-spacing:1.5px;margin-bottom:2px}.st-v{font-size:16px;font-weight:700;font-family:var(--sans)}
-.lay{display:flex;height:calc(100vh - 76px)}
-.mw{flex:1;position:relative;overflow:hidden;cursor:grab;user-select:none}.mw:active{cursor:grabbing}
-.mi{position:absolute;transform-origin:0 0;transition:transform .3s ease}
-.mc{position:absolute;top:12px;right:12px;z-index:20;display:flex;flex-direction:column;gap:2px}
-.mb{width:30px;height:30px;background:var(--card);border:1px solid var(--bdr);color:var(--bb);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--mono)}
-.mb:hover{background:var(--hover);color:#fff}.mb:first-child{border-radius:4px 4px 0 0}.mb:last-child{border-radius:0 0 4px 4px}
-.pop{position:absolute;background:rgba(10,16,24,.96);border:1px solid var(--bdrh);border-radius:8px;padding:16px 18px;z-index:30;min-width:260px;backdrop-filter:blur(12px);box-shadow:0 12px 40px rgba(0,0,0,.6);pointer-events:none;opacity:0;transition:opacity .2s}
-.pop.on{opacity:1;pointer-events:auto}
-.lg{position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,.85);border:1px solid var(--bdr);border-radius:6px;padding:8px 12px;font-size:8px;z-index:20}
-.lr{display:flex;align-items:center;gap:6px;margin-bottom:3px}.lr:last-child{margin-bottom:0}.ld{width:6px;height:6px;border-radius:50%}
-.rp{flex:0 0 380px;display:flex;flex-direction:column;border-left:1px solid var(--bdr);background:var(--bg);z-index:10;overflow:hidden}
-.tbs{display:flex;border-bottom:1px solid var(--bdr);background:var(--bg1)}
-.tb{flex:1;padding:9px;border:none;background:transparent;color:var(--t3);font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent}
-.tb:hover{color:var(--t2)}.tb.on{color:var(--blue);border-bottom-color:var(--blue);background:var(--bg)}
-.tc{flex:1;overflow-y:auto;padding:10px;scrollbar-width:thin;scrollbar-color:var(--bdr) transparent}
-.cd{background:var(--card);border:1px solid var(--bdr);border-radius:5px;padding:9px 11px;margin-bottom:4px;cursor:pointer;transition:all .15s}
-.cd:hover{border-color:var(--bdrh);background:var(--hover)}.cd.hl{border-color:rgba(26,140,255,.25);background:var(--bd)}
-.cd.rain{border-left:2px solid var(--violet)}
-.lw{display:flex;align-items:center;gap:6px;padding:3px 8px;margin-bottom:2px;border-radius:3px;border-left:2px solid transparent}
-.lw:hover{background:var(--hover)}.lw.ir{background:var(--bd);border-left-color:var(--blue)}.lw.cn{background:rgba(26,140,255,.08);border-left-color:var(--bb)}.lw.pk{border-left-color:var(--violet)}
-.sbox{margin-top:12px;padding:11px;border-radius:6px;border:1px solid var(--bdrh);background:var(--bd)}
-.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:10px}
-.slbl{font-size:8px;color:var(--t3);letter-spacing:1.5px;margin-bottom:5px;text-transform:uppercase}
-.ft{border-top:1px solid var(--bdr);padding:6px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--bg1);z-index:10;position:relative}
-.flink{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);text-decoration:none;padding:4px 12px;border:1px solid rgba(26,140,255,.3);border-radius:4px}.flink:hover{background:var(--bd)}
-.cg{cursor:pointer}.cg:hover .cr{r:6}
-.rain-tag{display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(139,122,255,.12);color:var(--violet);font-size:7px;font-weight:700;letter-spacing:.5px}
-.edge-tag{display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(0,212,106,.1);color:var(--green);font-size:7px;font-weight:700}
-@media(max-width:960px){.lay{flex-direction:column}.mw{height:50vh}.rp{flex:1;border-left:none;border-top:1px solid var(--bdr)}}
-</style></head><body>
-<div class="hdr"><div class="hdr-l"><img src="data:image/png;base64,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" style="width:30px;height:30px;border-radius:4px"><div><div class="bn">Odds<span>Engine</span></div><div class="bs">Weather Intelligence · 35 Cities · Mar 29 Markets</div></div></div>
-<div style="display:flex;align-items:center;gap:14px"><div style="text-align:right"><div style="font-size:8px;color:var(--t3);letter-spacing:1px">SCAN CYCLE</div><div class="ck" id="clk">—</div></div><div class="sd"></div></div></div>
-<div class="tkr"><div class="tki" id="tkr"></div></div>
-<div class="sts" id="sts"></div>
-<div class="lay">
-<div class="mw" id="mw"><div class="mi" id="mi"><svg id="ms" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg" style="width:960px;height:500px;display:block"></svg></div>
-<div class="mc"><button class="mb" onclick="zm(1)">+</button><button class="mb" onclick="zm(-1)">−</button><button class="mb" onclick="rs()" style="font-size:10px">⟲</button></div>
-<div class="pop" id="pop"></div>
-<div class="lg">
-<div class="lr"><div class="ld" style="background:var(--bb)"></div> High Confidence / Kern</div>
-<div class="lr"><div class="ld" style="background:var(--violet)"></div> Rain Play Edge</div>
-<div class="lr"><div class="ld" style="background:var(--amber)"></div> Medium / New City</div>
-<div class="lr"><div class="ld" style="background:var(--green)"></div> Our Position</div>
-</div></div>
-<div class="rp"><div class="tbs"><button class="tb on" onclick="sw('scanner')">Scanner</button><button class="tb" onclick="sw('ladder')">Recs</button><button class="tb" onclick="sw('perf')">Performance</button></div><div class="tc" id="tc"></div></div></div>
-<div class="ft"><div style="font-size:9px;color:var(--t2)">35 stations · 3 rain plays · real-time market data from Polymarket</div><a href="https://oddsengine.live" class="flink">OddsEngine →</a></div>
+:root{--bg:#04080d;--bg1:#080e16;--bg2:#0c131d;--card:#0e1620;--card2:#111c28;--bdr:#152030;--bdrh:#1e3048;--t1:#d8e2ee;--t2:#607890;--t3:#304060;--blue:#1e90ff;--bluel:#3aa0ff;--blued:rgba(30,144,255,.08);--green:#00d97e;--greend:rgba(0,217,126,.08);--amber:#f5a623;--amberd:rgba(245,166,35,.08);--red:#ff4757;--redd:rgba(255,71,87,.08);--violet:#8b5cf6;--violetd:rgba(139,92,246,.08);--cyan:#06d6a0;--mono:'IBM Plex Mono',monospace;--sans:'Outfit',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px;-webkit-font-smoothing:antialiased}
+
+.layout{display:grid;grid-template-rows:auto auto auto 1fr auto;grid-template-columns:1fr 380px;height:100vh}
+.header{grid-column:1/-1;border-bottom:1px solid var(--bdr);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--bg2),var(--bg))}
+.ticker{grid-column:1/-1;border-bottom:1px solid var(--bdr);background:var(--bg1);padding:4px 0;overflow:hidden;white-space:nowrap}
+.ticker-inner{display:inline-flex;gap:28px;animation:scroll 100s linear infinite}
+@keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.stats{grid-column:1/-1;display:flex;border-bottom:1px solid var(--bdr);background:var(--bg1)}
+.stat{flex:1;padding:8px 14px;border-right:1px solid var(--bdr)}.stat:last-child{border:none}
+.stat-l{font-size:8px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1px}
+.stat-v{font-size:15px;font-weight:600;font-family:var(--sans)}
+
+.map-wrap{position:relative;overflow:hidden}
+.panel{border-left:1px solid var(--bdr);display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--bg1)}
+.tab{flex:1;padding:8px;border:none;background:transparent;color:var(--t3);font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
+.tab:hover{color:var(--t2)}.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.panel-body{flex:1;overflow-y:auto;padding:10px;scrollbar-width:thin;scrollbar-color:var(--bdr) transparent}
+
+.footer{grid-column:1/-1;border-top:1px solid var(--bdr);padding:5px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--bg1)}
+
+/* Header */
+.logo-mark{width:28px;height:28px;border-radius:6px}
+.brand{font-size:13px;font-weight:700;letter-spacing:3px;color:#fff;text-transform:uppercase;font-family:var(--sans)}
+.brand span{color:var(--blue)}
+.brand-sub{font-size:9px;color:var(--t2);letter-spacing:1px}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+
+/* Cards */
+.city-card{background:var(--card);border:1px solid var(--bdr);border-radius:6px;padding:10px 12px;margin-bottom:5px;cursor:pointer;transition:all .15s}
+.city-card:hover{border-color:var(--bdrh);background:var(--card2)}
+.city-card.rain{border-left:3px solid var(--violet)}
+.city-card.edge{border-left:3px solid var(--blue)}
+.city-card.bet{border-left:3px solid var(--green)}
+.cc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.cc-name{font-size:12px;font-weight:600;color:#fff;font-family:var(--sans)}
+.cc-temp{font-size:18px;font-weight:800;font-family:var(--sans)}
+.cc-meta{display:flex;gap:6px;font-size:9px;color:var(--t2);flex-wrap:wrap;margin-bottom:4px}
+.tag{padding:1px 6px;border-radius:3px;font-size:8px;font-weight:600;letter-spacing:.3px}
+.tag-rain{background:var(--violetd);color:var(--violet)}
+.tag-dry{background:var(--greend);color:var(--green)}
+.tag-edge{background:var(--blued);color:var(--bluel)}
+.tag-bet{background:var(--greend);color:var(--green)}
+.tag-region{background:var(--blued);color:var(--t2);font-size:7px}
+
+/* Rain bars */
+.rain-row{display:flex;gap:1px;height:14px;margin:3px 0}
+.rain-bar{flex:1;border-radius:1px;min-width:0;position:relative}
+.rain-bar:hover::after{content:attr(data-tip);position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--bdr);padding:2px 5px;border-radius:3px;font-size:8px;white-space:nowrap;z-index:10;color:var(--t1)}
+
+/* Temp row */
+.temp-row{display:flex;gap:1px;height:20px;margin:2px 0;align-items:flex-end}
+.temp-fill{flex:1;border-radius:1px 1px 0 0;min-width:0}
+
+.time-labels{display:flex;gap:1px;font-size:7px;color:var(--t3)}
+.time-labels span{flex:1;text-align:center}
+
+.verdict{font-size:9px;padding:2px 7px;border-radius:3px;display:inline-block;margin-top:3px}
+.v-safe{background:var(--greend);color:var(--green)}
+.v-rain{background:var(--violetd);color:var(--violet)}
+.v-warn{background:var(--amberd);color:var(--amber)}
+
+.mkt-info{font-size:9px;color:var(--t2);margin-top:3px}
+
+.section-label{font-size:8px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
+
+/* Loading */
+.loading{text-align:center;padding:30px;color:var(--t2)}
+
+/* Leaflet overrides */
+.leaflet-container{background:var(--bg)!important}
+.leaflet-control-zoom a{background:var(--card)!important;color:var(--bluel)!important;border-color:var(--bdr)!important}
+.leaflet-control-attribution{display:none!important}
+
+/* Custom markers */
+.city-marker{border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-weight:700;font-size:10px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);cursor:pointer;transition:transform .2s}
+.city-marker:hover{transform:scale(1.3);z-index:1000!important}
+.city-label{font-family:var(--mono);font-size:9px;font-weight:500;color:rgba(255,255,255,.6);white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+
+/* Popup */
+.city-popup .leaflet-popup-content-wrapper{background:rgba(12,19,29,.96)!important;border:1px solid var(--bdrh)!important;border-radius:8px!important;color:var(--t1)!important;box-shadow:0 8px 32px rgba(0,0,0,.6)!important;backdrop-filter:blur(12px)}
+.city-popup .leaflet-popup-tip{background:rgba(12,19,29,.96)!important;border-color:var(--bdrh)!important}
+.city-popup .leaflet-popup-content{margin:12px 14px!important;font-family:var(--mono)!important;font-size:11px!important}
+
+/* Perf tab */
+.perf-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bdr)}
+.perf-win{color:var(--green)}.perf-loss{color:var(--red)}
+
+.flink{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);text-decoration:none;padding:3px 10px;border:1px solid rgba(30,144,255,.3);border-radius:4px}.flink:hover{background:var(--blued)}
+
+/* Filter buttons */
+.filters{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.fbtn{padding:3px 8px;font-size:8px;font-weight:600;letter-spacing:.5px;border:1px solid var(--bdr);background:transparent;color:var(--t2);border-radius:3px;cursor:pointer;font-family:var(--mono);transition:.15s}
+.fbtn:hover{border-color:var(--bdrh);color:var(--t1)}.fbtn.on{border-color:var(--blue);color:var(--bluel);background:var(--blued)}
+
+/* Weather layer controls */
+.wlayer-panel{position:absolute;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:2px}
+.wlayer-btn{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(14,22,32,.92);border:1px solid var(--bdr);border-radius:6px;color:var(--t2);font-family:var(--mono);font-size:10px;font-weight:500;cursor:pointer;transition:all .15s;backdrop-filter:blur(8px);letter-spacing:.3px;min-width:140px}
+.wlayer-btn:hover{border-color:var(--bdrh);color:var(--t1);background:rgba(17,28,40,.95)}
+.wlayer-btn.on{border-color:var(--blue);color:var(--bluel);background:rgba(30,144,255,.08)}
+.wlayer-btn .wl-icon{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.wlayer-btn .wl-dot{width:6px;height:6px;border-radius:50%;margin-left:auto;opacity:0;transition:.15s}
+.wlayer-btn.on .wl-dot{opacity:1}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .panel{height:50vh;border-left:none;border-top:1px solid var(--bdr)}
+}
+</style>
+</head><body>
+<div class="layout">
+
+<!-- HEADER -->
+<div class="header">
+  <div style="display:flex;align-items:center;gap:10px">
+    <img class="logo-mark" src="data:image/png;base64,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" alt="">
+    <div><div class="brand">Odds<span>Engine</span></div><div class="brand-sub">Weather Intelligence · Live Data</div></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="text-align:right"><div style="font-size:8px;color:var(--t3);letter-spacing:1px">SCAN CYCLE</div><div id="clock" style="font-size:11px;color:var(--blue)">—</div></div>
+    <div class="dot"></div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker"><div class="ticker-inner" id="ticker"></div></div>
+
+<!-- STATS -->
+<div class="stats" id="stats-bar"></div>
+
+<!-- MAP -->
+<div class="map-wrap">
+  <div id="map" style="width:100%;height:100%"></div>
+  <div class="wlayer-panel" id="wlayer-panel">
+    <div class="wlayer-btn" data-layer="temp_new" onclick="toggleWLayer(this)">
+      <span class="wl-icon">🌡</span>Temperature<span class="wl-dot" style="background:#f87171"></span>
+    </div>
+    <div class="wlayer-btn" data-layer="pressure_new" onclick="toggleWLayer(this)">
+      <span class="wl-icon">🔵</span>Pressure<span class="wl-dot" style="background:#60a5fa"></span>
+    </div>
+    <div class="wlayer-btn" data-layer="wind_new" onclick="toggleWLayer(this)">
+      <span class="wl-icon">💨</span>Wind speed<span class="wl-dot" style="background:#22d3ee"></span>
+    </div>
+    <div class="wlayer-btn" data-layer="precipitation_new" onclick="toggleWLayer(this)">
+      <span class="wl-icon">🌧</span>Precipitation<span class="wl-dot" style="background:#8b5cf6"></span>
+    </div>
+    <div class="wlayer-btn" data-layer="clouds_new" onclick="toggleWLayer(this)">
+      <span class="wl-icon">☁</span>Clouds<span class="wl-dot" style="background:#94a3b8"></span>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div class="panel">
+  <div class="tabs">
+    <button class="tab on" onclick="showTab('scanner',this)">Scanner</button>
+    <button class="tab" onclick="showTab('bets',this)">Positions</button>
+    <button class="tab" onclick="showTab('perf',this)">Performance</button>
+  </div>
+  <div class="panel-body" id="panel-content"><div class="loading">Fetching live data for 35 cities...</div></div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div style="font-size:9px;color:var(--t2)" id="fetch-status">Loading...</div>
+  <a href="https://oddsengine.live" class="flink">OddsEngine →</a>
+</div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// ══════════════════════════════════════════════════════════
-// ALL 35 CITIES — from Polymarket screenshots Mar 28
-// ══════════════════════════════════════════════════════════
-const D=[
-// Asia (12)
-{n:"Taipei",i:"RCTP",la:25.08,lo:121.23,r:"Asia"},
-{n:"Seoul",i:"RKSI",la:37.46,lo:126.44,r:"Asia"},
-{n:"Shanghai",i:"ZSPD",la:31.14,lo:121.81,r:"Asia"},
-{n:"Tokyo",i:"RJAA",la:35.76,lo:140.39,r:"Asia"},
-{n:"Beijing",i:"ZBAA",la:40.08,lo:116.60,r:"Asia"},
-{n:"Hong Kong",i:"VHHH",la:22.31,lo:113.92,r:"Asia"},
-{n:"Shenzhen",i:"ZGSZ",la:22.64,lo:113.81,r:"Asia"},
-{n:"Singapore",i:"WSSS",la:1.35,lo:103.99,r:"Asia"},
-{n:"Wuhan",i:"ZHHH",la:30.78,lo:114.21,r:"Asia"},
-{n:"Chengdu",i:"ZUUU",la:30.58,lo:103.95,r:"Asia"},
-{n:"Chongqing",i:"ZUCK",la:29.72,lo:106.64,r:"Asia"},
-{n:"Lucknow",i:"VILK",la:26.76,lo:80.89,r:"S.As"},
-// Europe (8)
-{n:"London",i:"EGLL",la:51.47,lo:-0.46,r:"EU"},
-{n:"Madrid",i:"LEMD",la:40.47,lo:-3.56,r:"EU"},
-{n:"Paris",i:"LFPG",la:49.01,lo:2.55,r:"EU"},
-{n:"Ankara",i:"LTAC",la:40.13,lo:32.99,r:"EU"},
-{n:"Munich",i:"EDDM",la:48.35,lo:11.79,r:"EU"},
-{n:"Warsaw",i:"EPWA",la:52.17,lo:20.97,r:"EU"},
-{n:"Milan",i:"LIMC",la:45.63,lo:8.72,r:"EU"},
-{n:"Tel Aviv",i:"LLBG",la:32.01,lo:34.88,r:"EU"},
-// Americas (13)
-{n:"Buenos Aires",i:"SAEZ",la:-34.82,lo:-58.54,r:"S.Am"},
-{n:"Sao Paulo",i:"SBGR",la:-23.44,lo:-46.47,r:"S.Am"},
-{n:"Toronto",i:"CYYZ",la:43.68,lo:-79.63,r:"US"},
-{n:"NYC",i:"KLGA",la:40.78,lo:-73.87,r:"US"},
-{n:"Chicago",i:"KORD",la:41.97,lo:-87.91,r:"US"},
-{n:"Atlanta",i:"KATL",la:33.64,lo:-84.43,r:"US"},
-{n:"Miami",i:"KMIA",la:25.80,lo:-80.29,r:"US"},
-{n:"Houston",i:"KIAH",la:29.98,lo:-95.34,r:"US"},
-{n:"Dallas",i:"KDFW",la:32.90,lo:-97.04,r:"US"},
-{n:"Austin",i:"KAUS",la:30.19,lo:-97.67,r:"US"},
-{n:"Denver",i:"KDEN",la:39.86,lo:-104.67,r:"US"},
-{n:"Los Angeles",i:"KLAX",la:33.94,lo:-118.41,r:"US"},
-{n:"San Francisco",i:"KSFO",la:37.62,lo:-122.38,r:"US"},
-{n:"Seattle",i:"KSEA",la:47.45,lo:-122.31,r:"US"},
-// Oceania
-{n:"Wellington",i:"NZWN",la:-41.33,lo:174.81,r:"OC"}
+// ═══════════════════════════════════════════
+// CITY DATA
+// ═══════════════════════════════════════════
+const CITIES=[
+{n:"Taipei",lat:25.08,lon:121.23,tz:"Asia/Taipei",u:"C",icao:"RCTP",slug:"taipei",r:"Asia"},
+{n:"Seoul",lat:37.46,lon:126.44,tz:"Asia/Seoul",u:"C",icao:"RKSI",slug:"seoul",r:"Asia",ob:-5.4},
+{n:"Shanghai",lat:31.14,lon:121.81,tz:"Asia/Shanghai",u:"C",icao:"ZSPD",slug:"shanghai",r:"Asia",ob:-4.5},
+{n:"Tokyo",lat:35.55,lon:139.78,tz:"Asia/Tokyo",u:"C",icao:"RJTT",slug:"tokyo",r:"Asia"},
+{n:"Beijing",lat:40.08,lon:116.58,tz:"Asia/Shanghai",u:"C",icao:"ZBAA",slug:"beijing",r:"Asia"},
+{n:"Hong Kong",lat:22.31,lon:113.92,tz:"Asia/Hong_Kong",u:"C",icao:"VHHH",slug:"hong-kong",r:"Asia"},
+{n:"Shenzhen",lat:22.64,lon:113.81,tz:"Asia/Shanghai",u:"C",icao:"ZGSZ",slug:"shenzhen",r:"Asia"},
+{n:"Singapore",lat:1.36,lon:103.99,tz:"Asia/Singapore",u:"C",icao:"WSSS",slug:"singapore",r:"Asia"},
+{n:"Wuhan",lat:30.78,lon:114.21,tz:"Asia/Shanghai",u:"C",icao:"ZHHH",slug:"wuhan",r:"Asia"},
+{n:"Chengdu",lat:30.57,lon:103.95,tz:"Asia/Shanghai",u:"C",icao:"ZUUU",slug:"chengdu",r:"Asia"},
+{n:"Chongqing",lat:29.72,lon:106.63,tz:"Asia/Shanghai",u:"C",icao:"ZUCK",slug:"chongqing",r:"Asia"},
+{n:"Lucknow",lat:26.76,lon:80.89,tz:"Asia/Kolkata",u:"C",icao:"VILK",slug:"lucknow",r:"S.Asia"},
+{n:"London",lat:51.51,lon:0.05,tz:"Europe/London",u:"C",icao:"EGLC",slug:"london",r:"EU"},
+{n:"Madrid",lat:40.47,lon:-3.56,tz:"Europe/Madrid",u:"C",icao:"LEMD",slug:"madrid",r:"EU"},
+{n:"Paris",lat:49.01,lon:2.55,tz:"Europe/Paris",u:"C",icao:"LFPG",slug:"paris",r:"EU"},
+{n:"Ankara",lat:40.12,lon:32.99,tz:"Europe/Istanbul",u:"C",icao:"LTAC",slug:"ankara",r:"EU"},
+{n:"Munich",lat:48.35,lon:11.79,tz:"Europe/Berlin",u:"C",icao:"EDDM",slug:"munich",r:"EU"},
+{n:"Warsaw",lat:52.17,lon:20.97,tz:"Europe/Warsaw",u:"C",icao:"EPWA",slug:"warsaw",r:"EU"},
+{n:"Milan",lat:45.63,lon:8.72,tz:"Europe/Rome",u:"C",icao:"LIMC",slug:"milan",r:"EU"},
+{n:"Tel Aviv",lat:32.01,lon:34.88,tz:"Asia/Jerusalem",u:"C",icao:"LLBG",slug:"tel-aviv",r:"EU"},
+{n:"Buenos Aires",lat:-34.82,lon:-58.54,tz:"America/Argentina/Buenos_Aires",u:"C",icao:"SAEZ",slug:"buenos-aires",r:"S.Am",hasBets:true},
+{n:"Sao Paulo",lat:-23.43,lon:-46.47,tz:"America/Sao_Paulo",u:"C",icao:"SBGR",slug:"sao-paulo",r:"S.Am"},
+{n:"Toronto",lat:43.68,lon:-79.63,tz:"America/Toronto",u:"C",icao:"CYYZ",slug:"toronto",r:"US"},
+{n:"NYC",lat:40.78,lon:-73.87,tz:"America/New_York",u:"F",icao:"KLGA",slug:"nyc",r:"US"},
+{n:"Chicago",lat:41.97,lon:-87.91,tz:"America/Chicago",u:"F",icao:"KORD",slug:"chicago",r:"US"},
+{n:"Atlanta",lat:33.64,lon:-84.43,tz:"America/New_York",u:"F",icao:"KATL",slug:"atlanta",r:"US"},
+{n:"Miami",lat:25.80,lon:-80.29,tz:"America/New_York",u:"F",icao:"KMIA",slug:"miami",r:"US"},
+{n:"Houston",lat:29.76,lon:-95.36,tz:"America/Chicago",u:"F",icao:"KHOU",slug:"houston",r:"US"},
+{n:"Dallas",lat:32.85,lon:-96.85,tz:"America/Chicago",u:"F",icao:"KDAL",slug:"dallas",r:"US"},
+{n:"Austin",lat:30.19,lon:-97.67,tz:"America/Chicago",u:"F",icao:"KAUS",slug:"austin",r:"US"},
+{n:"Denver",lat:39.86,lon:-104.67,tz:"America/Denver",u:"F",icao:"KBKF",slug:"denver",r:"US"},
+{n:"Los Angeles",lat:33.94,lon:-118.41,tz:"America/Los_Angeles",u:"F",icao:"KLAX",slug:"los-angeles",r:"US"},
+{n:"San Francisco",lat:37.62,lon:-122.38,tz:"America/Los_Angeles",u:"F",icao:"KSFO",slug:"san-francisco",r:"US"},
+{n:"Seattle",lat:47.45,lon:-122.31,tz:"America/Los_Angeles",u:"F",icao:"KSEA",slug:"seattle",r:"US"},
+{n:"Wellington",lat:-41.33,lon:174.81,tz:"Pacific/Auckland",u:"C",icao:"NZWN",slug:"wellington",r:"OC"}
 ];
 
-// Market data from Polymarket screenshots — Mar 29
-// mt=market top temp, mp=market top %, m2=second outcome, m2p=%, vol=volume $K
-// rain=mm, cloud=%, unit=C or F, adj=our adjusted temp
-const S={
-"Taipei":{mt:25,mp:28,m2:24,m2p:26,vol:168,rain:0,cloud:50,unit:"C",adj:25,edge:"KERN"},
-"Seoul":{mt:14,mp:25,m2:13,m2p:18,vol:65,rain:0,cloud:77,unit:"C",adj:13,edge:"KERN",offset:-8.9},
-"Shanghai":{mt:21,mp:25,m2:22,m2p:21,vol:75,rain:5,cloud:88,unit:"C",adj:20,edge:"RAIN-1"},
-"Tokyo":{mt:21,mp:33,m2:20,m2p:28,vol:42,rain:1,cloud:39,unit:"C",adj:21,edge:"KERN"},
-"Beijing":{mt:22,mp:51,m2:23,m2p:21,vol:61,rain:2,cloud:33,unit:"C",adj:22,edge:"LOCK"},
-"Hong Kong":{mt:27,mp:39,m2:28,m2p:29,vol:19,rain:0,cloud:77,unit:"C",adj:27,edge:"KERN"},
-"Shenzhen":{mt:29,mp:11,m2:25,m2p:7,vol:32,rain:3,cloud:81,unit:"C",adj:25,edge:"STATION⚠"},
-"Singapore":{mt:32,mp:44,m2:31,m2p:34,vol:28,rain:1,cloud:87,unit:"C",adj:32,edge:"LOCK"},
-"Wuhan":{mt:20,mp:12,m2:null,m2p:null,vol:null,rain:13,cloud:100,unit:"C",adj:17,edge:"RAIN⚡",isRain:true},
-"Chengdu":{mt:19,mp:29,m2:18,m2p:25,vol:31,rain:0,cloud:50,unit:"C",adj:19,edge:"KERN"},
-"Chongqing":{mt:19,mp:30,m2:null,m2p:null,vol:null,rain:0,cloud:98,unit:"C",adj:19,edge:"KERN"},
-"Lucknow":{mt:35,mp:35,m2:36,m2p:33,vol:32,rain:0,cloud:18,unit:"C",adj:35,edge:"KERN☀"},
-"London":{mt:11,mp:46,m2:12,m2p:24,vol:45,rain:0,cloud:64,unit:"C",adj:11,edge:"KERN"},
-"Madrid":{mt:13,mp:35,m2:12,m2p:25,vol:125,rain:0,cloud:50,unit:"C",adj:13,edge:"KERN"},
-"Paris":{mt:12,mp:38,m2:11,m2p:33,vol:20,rain:0,cloud:50,unit:"C",adj:12,edge:"KERN"},
-"Ankara":{mt:10,mp:39,m2:9,m2p:30,vol:79,rain:14,cloud:100,unit:"C",adj:7,edge:"RAIN⚡",isRain:true,offset:-1.4},
-"Munich":{mt:5,mp:14,m2:4,m2p:6,vol:21,rain:0,cloud:50,unit:"C",adj:5,edge:"FLAT"},
-"Warsaw":{mt:17,mp:28,m2:null,m2p:null,vol:null,rain:0,cloud:50,unit:"C",adj:17,edge:"?"},
-"Milan":{mt:17,mp:38,m2:18,m2p:30,vol:10,rain:0,cloud:50,unit:"C",adj:17,edge:"KERN"},
-"Tel Aviv":{mt:21,mp:81,m2:22,m2p:13,vol:13,rain:0,cloud:30,unit:"C",adj:21,edge:"LOCK"},
-"Buenos Aires":{mt:30,mp:28,m2:29,m2p:20,vol:30,rain:29,cloud:89,unit:"C",adj:26,edge:"RAIN⚡",isRain:true,hasBets:true},
-"Sao Paulo":{mt:30,mp:36,m2:null,m2p:null,vol:null,rain:0,cloud:53,unit:"C",adj:30,edge:"KERN"},
-"Toronto":{mt:10,mp:72,m2:9,m2p:17,vol:37,rain:0,cloud:50,unit:"C",adj:10,edge:"LOCK"},
-"NYC":{mt:"52-53",mp:38,m2:"50-51",m2p:23,vol:15,rain:0,cloud:50,unit:"F",adj:"52",edge:"KERN"},
-"Chicago":{mt:"62-63",mp:28,m2:"60-61",m2p:25,vol:20,rain:0,cloud:50,unit:"F",adj:"62",edge:"KERN"},
-"Atlanta":{mt:"68-69",mp:31,m2:"70-71",m2p:26,vol:14,rain:0,cloud:50,unit:"F",adj:"69",edge:"KERN"},
-"Miami":{mt:"78-79",mp:34,m2:"76-77",m2p:31,vol:20,rain:0,cloud:50,unit:"F",adj:"78",edge:"KERN"},
-"Houston":{mt:"80-81",mp:38,m2:"82-83",m2p:29,vol:null,rain:0,cloud:50,unit:"F",adj:"81",edge:"NEW"},
-"Dallas":{mt:"82-83",mp:34,m2:"80-81",m2p:25,vol:19,rain:0,cloud:50,unit:"F",adj:"82",edge:"KERN"},
-"Austin":{mt:"84-85",mp:26,m2:"82-83",m2p:25,vol:null,rain:0,cloud:50,unit:"F",adj:"83",edge:"NEW"},
-"Denver":{mt:"78-79",mp:28,m2:"80-81",m2p:22,vol:null,rain:0,cloud:50,unit:"F",adj:"79",edge:"NEW"},
-"Los Angeles":{mt:"70-71",mp:14,m2:"68-69",m2p:6,vol:26,rain:0,cloud:50,unit:"F",adj:"70",edge:"FLAT"},
-"San Francisco":{mt:"76+",mp:42,m2:"72-73",m2p:25,vol:19,rain:0,cloud:50,unit:"F",adj:"74",edge:"WIDE"},
-"Seattle":{mt:"46-47",mp:35,m2:"48-49",m2p:24,vol:23,rain:0,cloud:50,unit:"F",adj:"47",edge:"KERN"},
-"Wellington":{mt:20,mp:36,m2:19,m2p:25,vol:159,rain:3,cloud:93,unit:"C",adj:19,edge:"RAIN-1"}
-};
+const DATE='2026-03-29';
+let weatherData={}, marketData={}, currentTab='scanner', currentFilter='all';
 
-const RC={"Asia":"#3da0ff","S.Am":"#f97316","EU":"#a78bfa","US":"#facc15","S.As":"#fb7185","OC":"#34d399"};
-function pj(la,lo){const x=((lo+180)/360)*960,r=(la*Math.PI)/180,m=Math.log(Math.tan(Math.PI/4+r/2));return{x,y:250-(m/Math.PI)*250*.82}}
-setInterval(()=>{document.getElementById('clk').textContent=new Date().toISOString().replace('T',' ').substring(0,19)+' UTC'},1000);
+// ═══════════════════════════════════════════
+// MAP INIT
+// ═══════════════════════════════════════════
+const map=L.map('map',{zoomControl:true,attributionControl:false,minZoom:2,maxZoom:10}).setView([25,20],2.5);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
 
-// Ticker — all cities with market data
-!function(){const e=document.getElementById('tkr');let h='';
-Object.entries(S).forEach(([n,d])=>{
-var u=d.unit==='F'?'°F':'°C';
-var rc=d.isRain?'var(--violet)':d.edge.includes('LOCK')?'var(--t2)':'var(--bb)';
-h+='<span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;color:var(--t2)"><b style="color:var(--t1)">'+n+'</b><span style="color:'+rc+';font-weight:700">'+d.mt+u+'</span><span style="font-size:8px;color:var(--t3)">'+d.mp+'%</span>'+(d.isRain?'<span style="font-size:7px;color:var(--violet)">🌧'+d.rain+'mm</span>':'')+'<span style="color:var(--t3)">·</span></span>'});
-e.innerHTML=h+h}();
-
-// Stats bar
-!function(){document.getElementById('sts').innerHTML=[
-{l:"NET P&L",v:"+$76",c:"var(--green)"},{l:"ROI",v:"422%",c:"var(--green)"},{l:"WIN RATE",v:"3/5",c:"var(--bb)"},{l:"BEST HIT",v:"37x",c:"var(--green)"},{l:"WALLET",v:"$55.76",c:"var(--t1)"},{l:"PENDING",v:"$36.50",c:"var(--amber)"},{l:"CITIES",v:"35",c:"var(--bb)"}
-].map(s=>'<div class="st"><div class="st-l">'+s.l+'</div><div class="st-v" style="color:'+s.c+'">'+s.v+'</div></div>').join('')}();
-
-// Pan/Zoom
-let sc=1,px=0,py=0,dr=false,sx,sy;const mw=document.getElementById('mw'),mi=document.getElementById('mi');
-function ut(){mi.style.transform='translate('+px+'px,'+py+'px) scale('+sc+')'}
-function zm(d){sc=Math.max(.5,Math.min(6,sc*(d>0?1.4:.7)));ut()}
-function rs(){sc=1;px=0;py=0;ut()}
-mw.onmousedown=function(e){if(e.button!==0)return;dr=true;sx=e.clientX-px;sy=e.clientY-py;mw.style.cursor='grabbing'};
-window.onmousemove=function(e){if(!dr)return;px=e.clientX-sx;py=e.clientY-sy;mi.style.transition='none';ut()};
-window.onmouseup=function(){dr=false;mw.style.cursor='grab';mi.style.transition='transform .3s ease'};
-mw.onwheel=function(e){e.preventDefault();zm(e.deltaY<0?1:-1)};
-
-// Build Map
-let sel=null;
-!function(){const svg=document.getElementById('ms');let h='';
-for(let i=0;i<20;i++)h+='<line x1="'+(i*50)+'" y1="0" x2="'+(i*50)+'" y2="500" stroke="rgba(26,140,255,.025)" stroke-width=".5"/>';
-for(let i=0;i<11;i++)h+='<line x1="0" y1="'+(i*50)+'" x2="960" y2="'+(i*50)+'" stroke="rgba(26,140,255,.025)" stroke-width=".5"/>';
-var lands=["M140,120L170,108L215,100L260,98L305,100L335,115L352,130L350,138L340,150L345,170L365,198L350,205L320,195L290,198L258,175L235,165L215,145L210,132L185,118L155,125L142,128Z","M265,230L288,225L305,248L310,268L305,288L295,332L278,355L265,342L258,312L253,282L255,262Z","M430,80L465,82L490,82L515,94L505,102L482,105L455,95L436,85Z","M440,140L480,140L505,178L510,202L505,228L480,270L458,280L435,265L425,225L430,195L440,148Z","M500,62L560,48L620,48L680,52L740,55L775,78L762,95L725,108L688,105L650,118L612,128L575,125L525,115L502,98L498,72Z","M720,260L755,258L782,288L770,308L732,305L716,278Z","M605,130L632,140L638,162L628,180L605,175L600,155Z","M760,80L772,82L775,88L768,98L760,90Z","M432,70L440,68L442,72L436,78Z"];
-lands.forEach(p=>{h+='<path d="'+p+'" fill="rgba(26,140,255,.04)" stroke="rgba(26,140,255,.08)" stroke-width=".5"/>'});
-h+='<line x1="0" y1="242" x2="960" y2="242" stroke="rgba(26,140,255,.04)" stroke-width="1" stroke-dasharray="4,8"/>';
-
-D.forEach(c=>{var p=pj(c.la,c.lo),d=S[c.n],has=!!d;
-var col=has?(d.isRain?'#8b7aff':d.hasBets?'#00d46a':d.edge.includes('LOCK')?'#2a3a52':'#3da0ff'):'#2a3a52';
-var sz=has?(d.isRain?5.5:d.edge.includes('LOCK')?3:4.5):2.5;
-if(has&&(d.isRain||d.hasBets)){
-h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="18" fill="'+col+'" opacity=".04"/>';
-h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="14" fill="none" stroke="'+col+'" stroke-width=".5" opacity=".2"><animate attributeName="r" values="10;18;10" dur="4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".3;.05;.3" dur="4s" repeatCount="indefinite"/></circle>'}
-h+='<g class="cg" onclick="cc(\''+c.n+'\',event)"><circle cx="'+p.x+'" cy="'+p.y+'" r="'+(sz+8)+'" fill="transparent"/><circle class="cr" cx="'+p.x+'" cy="'+p.y+'" r="'+sz+'" fill="'+col+'" style="transition:r .2s"/></g>';
-if(has&&!d.edge.includes('LOCK')){
-var u=d.unit==='F'?'°F':'°C';
-h+='<text x="'+(p.x+10)+'" y="'+(p.y+3)+'" fill="'+col+'" font-size="7" font-family="var(--mono)" font-weight="600" opacity=".7" pointer-events="none">'+c.n+'</text>';
-h+='<text x="'+(p.x+10)+'" y="'+(p.y+12)+'" fill="'+col+'" font-size="8" font-family="var(--sans)" font-weight="800" opacity=".5" pointer-events="none">'+d.mt+u+'</text>'}
+// ═══════════════════════════════════════════
+// OWM WEATHER LAYERS
+// ═══════════════════════════════════════════
+const OWM_KEY='e75a83526c2d947cd221d23a0e3e6ad2';
+const owmLayers={};
+['temp_new','pressure_new','wind_new','precipitation_new','clouds_new'].forEach(layer=>{
+  owmLayers[layer]=L.tileLayer(`https://tile.openweathermap.org/map/${layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`,{
+    maxZoom:19,opacity:0.6,attribution:'OpenWeatherMap'
+  });
 });
-svg.innerHTML=h}();
 
-// Popup
-var pop=document.getElementById('pop');
-function cc(n,ev){var c=D.find(x=>x.n===n),d=S[n],rect=mw.getBoundingClientRect(),mx=ev.clientX-rect.left,my=ev.clientY-rect.top;sel=n;rn();
-if(!d){pop.innerHTML='<div style="font-size:14px;font-weight:700;color:#fff;font-family:var(--sans)">'+n+'</div><div style="font-size:9px;color:var(--t3);margin-top:4px">No market data</div>';
-}else{var u=d.unit==='F'?'°F':'°C',rc=RC[c.r]||'#666';
-pop.innerHTML='<div style="cursor:pointer;position:absolute;top:6px;right:10px;color:var(--t3);font-size:14px" onclick="pop.classList.remove(\'on\')">✕</div>'+
-'<div style="font-size:15px;font-weight:700;color:#fff;font-family:var(--sans)">'+n+'<span style="font-size:9px;color:var(--t2);margin-left:6px">'+c.i+'</span></div>'+
-'<div style="display:flex;gap:6px;margin-top:4px;align-items:center"><span style="display:inline-block;padding:1px 6px;border-radius:3px;background:'+rc+'18;color:'+rc+';font-size:8px;font-weight:600">'+c.r+'</span>'+
-(d.isRain?'<span class="rain-tag">🌧 '+d.rain+'mm RAIN</span>':'')+
-(d.hasBets?'<span class="edge-tag">✓ POSITION</span>':'')+'</div>'+
-'<div style="font-size:28px;font-weight:800;color:'+(d.isRain?'var(--violet)':'var(--bb)')+';font-family:var(--sans);margin:6px 0">'+d.mt+u+'<span style="font-size:12px;color:var(--t2);margin-left:6px">'+d.mp+'%</span></div>'+
-(d.m2?'<div style="font-size:10px;color:var(--t2)">2nd: '+d.m2+u+' @ '+d.m2p+'%</div>':'')+
-'<div style="font-size:9px;color:var(--t2);margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr)">'+
-'Rain: <b style="color:'+(d.rain>3?'var(--violet)':'var(--green)')+'">'+d.rain+'mm</b> · Cloud: <b>'+d.cloud+'%</b>'+(d.offset?' · Offset: <b style="color:var(--amber)">'+d.offset+'°C</b>':'')+'</div>'+
-(d.adj!=d.mt?'<div style="font-size:10px;color:var(--cyan);margin-top:4px">⚡ Our adjusted: <b>'+d.adj+u+'</b> '+(d.isRain?'(rain -3°C)':'')+'</div>':'')+
-(d.vol?'<div style="font-size:9px;color:var(--t3);margin-top:4px">Volume: $'+d.vol+'K</div>':'')
+function toggleWLayer(btn){
+  const layer=btn.dataset.layer;
+  if(btn.classList.contains('on')){
+    btn.classList.remove('on');
+    map.removeLayer(owmLayers[layer]);
+  }else{
+    btn.classList.add('on');
+    owmLayers[layer].addTo(map);
+  }
 }
-pop.style.left=Math.min(mx+16,rect.width-280)+'px';pop.style.top=Math.max(my-20,10)+'px';pop.classList.add('on')}
-mw.addEventListener('mousedown',function(e){if(!e.target.closest('.pop'))pop.classList.remove('on')});
 
-// Tabs
-var at='scanner';
-function sw(t){at=t;document.querySelectorAll('.tb').forEach(b=>{b.classList.toggle('on',b.textContent.toLowerCase()===t)});rn()}
-function sC(n){sel=n;rn()}
-function rn(){var e=document.getElementById('tc');if(at==='scanner')rS(e);else if(at==='ladder')rL(e);else rP(e)}
+const markers={};
+function tempColor(t){
+  if(t<0)return'#60a5fa';if(t<5)return'#38bdf8';if(t<10)return'#06d6a0';
+  if(t<15)return'#22d3ee';if(t<20)return'#a3e635';if(t<25)return'#facc15';
+  if(t<30)return'#fb923c';if(t<35)return'#f87171';return'#ef4444';
+}
 
-// SCANNER TAB
-function rS(el){
-var rainCities=[],kernCities=[],lockCities=[],otherCities=[];
-Object.entries(S).forEach(([n,d])=>{
-if(d.isRain)rainCities.push([n,d]);
-else if(d.edge.includes('LOCK'))lockCities.push([n,d]);
-else if(d.edge.includes('KERN')||d.edge.includes('RAIN'))kernCities.push([n,d]);
-else otherCities.push([n,d]);
-});
-var h='<div class="slbl">🌧 Rain Plays — Biggest Edge</div>';
-rainCities.forEach(([n,d],i)=>{var c=D.find(x=>x.n===n),rc=RC[c?c.r:'']||'#666',u=d.unit==='F'?'°F':'°C';
-h+='<div class="cd rain'+(sel===n?' hl':'')+'" style="animation:fadeUp .3s ease-out '+(i*40)+'ms both" onclick="sC(\''+n+'\')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="display:flex;align-items:center;gap:6px"><div style="width:5px;height:5px;border-radius:50%;background:var(--violet)"></div><span style="font-size:11px;font-weight:700;color:#fff;font-family:var(--sans)">'+n+'</span><span class="rain-tag">🌧 '+d.rain+'mm</span>'+(d.hasBets?'<span class="edge-tag">✓ COVERED</span>':'')+'</div><div><span style="font-size:17px;font-weight:800;color:var(--violet);font-family:var(--sans)">'+d.adj+u+'</span><span style="font-size:9px;color:var(--t3);margin-left:4px">adj</span></div></div>'+
-'<div style="font-size:9px;color:var(--t2)">Market: '+d.mt+u+' @ '+d.mp+'% · Cloud: '+d.cloud+'% · <span style="color:var(--violet)">Δ'+(d.mt-d.adj)+'°C mispriced</span></div></div>'});
+function addCityMarkers(){
+  CITIES.forEach(c=>{
+    const col=tempColor(20);
+    const icon=L.divIcon({
+      className:'',
+      html:`<div class="city-marker" style="width:28px;height:28px;background:${col}44;border-color:${col}">`+
+           `<span style="font-size:9px">—</span></div>`+
+           `<div class="city-label" style="position:absolute;top:30px;left:50%;transform:translateX(-50%)">${c.n}</div>`,
+      iconSize:[28,42],iconAnchor:[14,14]
+    });
+    const m=L.marker([c.lat,c.lon],{icon}).addTo(map);
+    m.cityData=c;
+    m.on('click',()=>selectCity(c.n));
+    markers[c.n]=m;
+  });
+}
 
-h+='<div class="slbl" style="margin-top:10px">🎯 Kern Bets — High Confidence</div>';
-kernCities.sort((a,b)=>(b[1].vol||0)-(a[1].vol||0));
-kernCities.forEach(([n,d],i)=>{var c=D.find(x=>x.n===n),rc=RC[c?c.r:'']||'#666',u=d.unit==='F'?'°F':'°C';
-h+='<div class="cd'+(sel===n?' hl':'')+'" style="animation:fadeUp .3s ease-out '+((i+rainCities.length)*30)+'ms both" onclick="sC(\''+n+'\')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><div style="display:flex;align-items:center;gap:6px"><div style="width:5px;height:5px;border-radius:50%;background:var(--bb)"></div><span style="font-size:11px;font-weight:700;color:#fff;font-family:var(--sans)">'+n+'</span><span style="font-size:7px;padding:1px 5px;border-radius:3px;font-weight:600;background:'+rc+'18;color:'+rc+'">'+c.r+'</span></div><div style="font-size:15px;font-weight:800;color:var(--bb);font-family:var(--sans)">'+d.mt+u+'</div></div>'+
-'<div style="display:flex;gap:8px;font-size:9px;flex-wrap:wrap;color:var(--t2)"><span>'+d.mp+'%</span>'+(d.m2?'<span>2nd:'+d.m2+u+' '+d.m2p+'%</span>':'')+'<span>☁'+d.cloud+'%</span>'+(d.rain?'<span style="color:var(--violet)">🌧'+d.rain+'mm</span>':'')+(d.vol?'<span>$'+d.vol+'K</span>':'')+'</div></div>'});
+function updateMarker(name,temp,rain){
+  const m=markers[name];if(!m)return;
+  const c=m.cityData;
+  const col=tempColor(temp);
+  const u=c.u==='F'?'°F':'°C';
+  const display=c.u==='F'?Math.round(temp*9/5+32)+u:Math.round(temp)+u;
+  const rainDot=rain>3?'🌧':'';
+  const hasBet=c.hasBets||['Munich','Ankara'].includes(name);
+  const ring=hasBet?`box-shadow:0 0 0 3px ${col}44,0 0 12px ${col}33`:'';
+  
+  m.setIcon(L.divIcon({
+    className:'',
+    html:`<div class="city-marker" style="width:32px;height:32px;background:${col}55;border-color:${col};${ring}">`+
+         `<span style="font-size:10px">${Math.round(temp)}</span></div>`+
+         `<div class="city-label" style="position:absolute;top:34px;left:50%;transform:translateX(-50%)">${name} ${rainDot}</div>`,
+    iconSize:[32,48],iconAnchor:[16,16]
+  }));
+}
 
-h+='<div class="slbl" style="margin-top:10px">🔒 Locked — Low Edge ('+lockCities.length+')</div><div style="display:flex;flex-wrap:wrap;gap:3px">';
-lockCities.forEach(([n,d])=>{var u=d.unit==='F'?'°F':'°C';
-h+='<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.02);color:var(--t3);border:1px solid var(--bdr);cursor:pointer" onclick="sC(\''+n+'\')">'+n+' '+d.mt+u+' '+d.mp+'%</span>'});
-h+='</div>';
+function selectCity(name){
+  const d=weatherData[name];
+  if(!d)return;
+  const c=CITIES.find(x=>x.n===name);
+  const mk=marketData[name];
+  const v=getVerdict(d);
+  const u=c.u==='F'?'°F':'°C';
+  const peakDisplay=c.u==='F'?Math.round(d.peak*9/5+32)+'°F':d.peak+'°C';
+  
+  let html=`<div style="font-size:15px;font-weight:700;color:#fff;font-family:var(--sans)">${name}</div>`+
+    `<div style="font-size:9px;color:var(--t2);margin:2px 0">${c.icao} · ${c.r}</div>`+
+    `<div style="font-size:24px;font-weight:800;color:${tempColor(d.peak)};font-family:var(--sans);margin:4px 0">${peakDisplay}</div>`+
+    `<div style="font-size:9px;color:var(--t2)">Peak @${d.peakH}:00 · Rain: ${d.totalRain}mm · Cloud@peak: ${d.avgPeakCloud}%</div>`+
+    `<div class="verdict ${v.cls}" style="margin-top:4px">${v.text}</div>`;
+  if(mk){
+    html+=`<div style="font-size:9px;color:var(--t2);margin-top:6px;padding-top:6px;border-top:1px solid var(--bdr)">Market: <b style="color:var(--t1)">${mk.t1}</b> @${mk.p1}%</div>`;
+  }
+  
+  const popup=L.popup({className:'city-popup',maxWidth:260}).setLatLng([c.lat,c.lon]).setContent(html);
+  popup.openOn(map);
+}
 
-h+='<div class="slbl" style="margin-top:10px">Other — '+otherCities.length+'</div><div style="display:flex;flex-wrap:wrap;gap:3px">';
-otherCities.forEach(([n,d])=>{var u=d.unit==='F'?'°F':'°C';
-h+='<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.02);color:var(--t3);border:1px solid var(--bdr);cursor:pointer" onclick="sC(\''+n+'\')">'+n+' '+d.mt+u+' '+d.mp+'%</span>'});
-h+='</div>';
-el.innerHTML=h}
+addCityMarkers();
 
-// RECS TAB
-function rL(el){
-var h='<div class="slbl">Mar 29 — Recommended Bets</div>';
-h+='<div class="sbox" style="border-color:rgba(139,122,255,.3);background:rgba(139,122,255,.06);margin-top:0;margin-bottom:10px"><div style="font-size:9px;color:var(--violet);font-weight:700;letter-spacing:1px;margin-bottom:6px">🌧 TIER 1: RAIN PLAYS</div>';
-[
-{n:"Wuhan",rain:13,mkt:"20°C@12%",adj:"17-18°C",bets:"17,18,19,20",cost:4,best:"18°C@~1¢=$133"},
-{n:"Ankara",rain:14,mkt:"10°C@39%",adj:"7-8°C",bets:"7,8,9,10",cost:4,best:"7°C@~1¢=$91"},
-{n:"Buenos Aires",rain:29,mkt:"30°C@28%",adj:"26-27°C",bets:"COVERED 23-28°C",cost:0,best:"✅ Already positioned"}
-].forEach(r=>{
-h+='<div style="padding:6px 0;border-bottom:1px solid var(--bdr)"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;color:#fff;font-family:var(--sans)">'+r.n+' <span style="color:var(--violet);font-size:9px">🌧'+r.rain+'mm</span></span><span style="color:var(--cyan);font-weight:700">→ '+r.adj+'</span></div>'+
-'<div style="font-size:9px;color:var(--t2);margin-top:2px">Market: '+r.mkt+' · Bets: <span style="color:var(--bb)">'+r.bets+'</span>'+(r.cost?' · $'+r.cost:'')+'</div>'+
-'<div style="font-size:9px;color:var(--amber);margin-top:1px">'+r.best+'</div></div>'});
-h+='</div>';
+// ═══════════════════════════════════════════
+// DATA FETCHING
+// ═══════════════════════════════════════════
+async function fetchWeather(){
+  let done=0;
+  for(let i=0;i<CITIES.length;i+=5){
+    const batch=CITIES.slice(i,i+5);
+    await Promise.all(batch.map(async c=>{
+      try{
+        const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m&start_date=${DATE}&end_date=${DATE}&timezone=${encodeURIComponent(c.tz)}`);
+        const d=await r.json();const h=d.hourly||{};
+        const temps=h.temperature_2m||[],precip=h.precipitation||[],clouds=h.cloud_cover||[],wind=h.wind_speed_10m||[];
+        if(!temps.length)return;
+        const peak=Math.max(...temps),peakH=temps.indexOf(peak);
+        const totalRain=Math.round(precip.reduce((a,b)=>a+b,0)*10)/10;
+        const amRain=Math.round(precip.slice(6,12).reduce((a,b)=>a+b,0)*10)/10;
+        const pmRain=Math.round(precip.slice(12,18).reduce((a,b)=>a+b,0)*10)/10;
+        const peakRain=Math.round(precip.slice(10,16).reduce((a,b)=>a+b,0)*10)/10;
+        const pc=clouds.slice(10,16);
+        const avgPeakCloud=pc.length?Math.round(pc.reduce((a,b)=>a+b,0)/pc.length):0;
+        
+        weatherData[c.n]={temps,precip,clouds,wind,peak:Math.round(peak*10)/10,peakH,
+          totalRain,amRain,pmRain,peakRain,avgPeakCloud,maxWind:Math.round(Math.max(...wind)*10)/10};
+        updateMarker(c.n,peak,totalRain);
+      }catch(e){}
+      done++;
+      document.getElementById('fetch-status').textContent=`Weather: ${done}/${CITIES.length}`;
+    }));
+  }
+}
 
-h+='<div class="sbox" style="border-color:rgba(61,160,255,.3);background:rgba(61,160,255,.06);margin-bottom:10px"><div style="font-size:9px;color:var(--bb);font-weight:700;letter-spacing:1px;margin-bottom:6px">🎯 TIER 2: KERN BETS</div>';
-[
-{n:"Lucknow",mkt:"35°C@35%",bets:"34,35,36,37",cost:4,note:"18% cloud = max solar"},
-{n:"Seoul",mkt:"14°C@25%",bets:"12,13,14,15",cost:4,note:"TAF TX14, -8.9°C offset"},
-{n:"Tokyo",mkt:"21°C@33%",bets:"19,20,21,22",cost:4,note:"Nearly dry, 39% cloud"},
-{n:"London",mkt:"11°C@46%",bets:"10,11,12",cost:3,note:"Dry, 46% is high but safe"},
-{n:"Sao Paulo",mkt:"30°C@36%",bets:"28,29,30,31",cost:4,note:"Dry, 53% cloud"},
-{n:"Shanghai",mkt:"21°C@25%",bets:"19,20,21,22",cost:4,note:"5mm rain, -1°C adj"},
-{n:"Chongqing",mkt:"19°C@30%",bets:"17,18,19,20",cost:4,note:"Dry but 98% cloud"},
-{n:"Shenzhen",mkt:"29°C@11%",bets:"23,24,25,26",cost:4,note:"⚠ CHECK STATION"}
-].forEach(r=>{
-h+='<div style="padding:4px 0;border-bottom:1px solid var(--bdr);font-size:10px"><div style="display:flex;justify-content:space-between"><span style="color:#fff;font-weight:600">'+r.n+'</span><span style="color:var(--bb)">$'+r.cost+'</span></div>'+
-'<div style="font-size:9px;color:var(--t2)">'+r.mkt+' · Bets: '+r.bets+' · '+r.note+'</div></div>'});
-h+='</div>';
+async function fetchMarkets(){
+  let done=0;
+  const mo={'03':'march','04':'april'};
+  const p=DATE.split('-');
+  const datePart=`${mo[p[1]]}-${parseInt(p[2])}-${p[0]}`;
+  
+  for(const c of CITIES){
+    try{
+      const slug=`highest-temperature-in-${c.slug}-on-${datePart}`;
+      const r=await fetch(`https://gamma-api.polymarket.com/events/slug/${slug}`);
+      if(r.status!==200)continue;
+      const ev=await r.json();
+      let best=null;
+      for(const m of(ev.markets||[])){
+        try{
+          const pr=JSON.parse(m.outcomePrices||'[]');
+          const p0=parseFloat(pr[0]);
+          if(!best||p0>best.p)best={t:m.groupItemTitle,p:p0};
+        }catch(e){}
+      }
+      if(best)marketData[c.n]={t1:best.t,p1:Math.round(best.p*1000)/10,vol:ev.volume||0};
+    }catch(e){}
+    done++;
+    document.getElementById('fetch-status').textContent=`Markets: ${done}/${CITIES.length}`;
+  }
+}
 
-h+='<div class="sbox" style="border-color:rgba(0,212,106,.3);background:rgba(0,212,106,.06)"><div style="font-size:9px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px">BUDGET SUMMARY</div>'+
-'<div class="sgrid"><span style="color:var(--t2)">Tier 1 Rain</span><span style="color:var(--violet);font-weight:600">$8 (2 cities)</span>'+
-'<span style="color:var(--t2)">Tier 2 Kern</span><span style="color:var(--bb);font-weight:600">$31 (8 cities)</span>'+
-'<span style="color:var(--t2)">Full Package</span><span style="color:#fff;font-weight:700">$39</span>'+
-'<span style="color:var(--t2)">Top 5 Only</span><span style="color:var(--green);font-weight:700">$20</span>'+
-'<span style="color:var(--t2)">Available</span><span style="color:var(--green);font-weight:700">~$92</span></div></div>';
+// ═══════════════════════════════════════════
+// UI RENDERING
+// ═══════════════════════════════════════════
+function getVerdict(d){
+  if(!d)return{text:'NO DATA',cls:'v-warn'};
+  if(d.totalRain===0)return{text:'☀ DRY',cls:'v-safe'};
+  if(d.peakRain>2)return{text:`🌧 RAIN@PEAK (${d.peakRain}mm)`,cls:'v-rain'};
+  if(d.amRain>1&&d.pmRain<.5)return{text:`AM rain → peak safe`,cls:'v-warn'};
+  if(d.pmRain>1)return{text:`PM rain (${d.pmRain}mm)`,cls:'v-rain'};
+  return{text:`Light (${d.totalRain}mm)`,cls:'v-safe'};
+}
 
-h+='<div class="sbox" style="margin-top:8px"><div style="font-size:8px;letter-spacing:1.5px;margin-bottom:5px;color:var(--blue)">EV ANALYSIS (TOP 5 = $20)</div>'+
-'<div style="font-size:10px;color:var(--t1);line-height:1.6;font-family:var(--sans)">3/5 kern hits @ avg $4 = <b style="color:var(--bb)">$12</b> + 1 rain lotto = <b style="color:var(--violet)">$28-133</b><br>→ Expected: <b style="color:var(--green)">$40-145</b> on $20 invested</div></div>';
-el.innerHTML=h}
+function rainColor(mm){
+  if(mm===0)return'transparent';
+  if(mm<.5)return'rgba(139,92,246,.2)';if(mm<2)return'rgba(139,92,246,.4)';
+  if(mm<5)return'rgba(139,92,246,.65)';return'rgba(139,92,246,.85)';
+}
 
-// PERFORMANCE TAB
-function rP(el){var h='';
-h+='<div class="sbox" style="margin-bottom:12px;border-color:rgba(0,212,106,.2);background:rgba(0,212,106,.06)"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:4px">NET P&L</div><div style="font-size:32px;font-weight:800;color:var(--green);font-family:var(--sans)">+$76.33</div></div><div style="text-align:right"><div style="font-size:10px;color:var(--t2)">$18.10 invested</div><div style="font-size:18px;font-weight:700;color:var(--bb);font-family:var(--sans)">422% ROI</div></div></div></div>';
+function renderTicker(){
+  let h='';
+  Object.entries(weatherData).forEach(([n,d])=>{
+    const c=CITIES.find(x=>x.n===n);
+    const u=c?.u==='F'?'°F':'°C';
+    const t=c?.u==='F'?Math.round(d.peak*9/5+32):Math.round(d.peak);
+    const col=tempColor(d.peak);
+    h+=`<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--t2)"><b style="color:var(--t1)">${n}</b><span style="color:${col};font-weight:600">${t}${u}</span>${d.totalRain>0?`<span style="color:var(--violet);font-size:8px">🌧${d.totalRain}mm</span>`:''}·</span>`;
+  });
+  document.getElementById('ticker').innerHTML=h+h;
+}
 
-h+='<div class="slbl">Trade History</div>';
-[{d:"Mar 27",n:"Chongqing 17°C",c:"$1.50",p:"$55.56",r:"+$54.06",x:"37x",s:"✅"},
-{d:"Mar 27",n:"BA 26°C",c:"$2.10",p:"$30.37",r:"+$28.27",x:"14x",s:"⏳ REDEEM"},
-{d:"Mar 28",n:"Seoul 12°C",c:"$1.50",p:"$6.50",r:"+$5.00",x:"4.3x",s:"⏳ REDEEM"},
-{d:"Mar 28",n:"Seoul 11,15",c:"$3.00",p:"$0",r:"-$3.00",x:"—",s:"❌"},
-{d:"Mar 28",n:"Shanghai 19,20,22,23",c:"$4.00",p:"$0",r:"-$4.00",x:"—",s:"❌ GAP"},
-{d:"Mar 28",n:"CQ 17,18,20,21",c:"$4.00",p:"$0",r:"-$4.00",x:"—",s:"❌ RAIN"}
-].forEach(t=>{var isW=t.r.startsWith('+');
-h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bdr)"><div><div style="font-size:10px;font-weight:600;color:'+(isW?'var(--green)':'var(--red)')+'">'+t.n+'</div><div style="font-size:8px;color:var(--t3)">'+t.d+' · '+t.c+' → '+t.p+'</div></div><div style="text-align:right"><div style="font-size:14px;font-weight:800;color:'+(isW?'var(--green)':'var(--red)')+';font-family:var(--sans)">'+t.r+'</div><div style="font-size:8px;color:var(--t2)">'+t.s+(t.x!=='—'?' · '+t.x:'')+'</div></div></div>'});
+function renderStats(){
+  const rain=Object.values(weatherData).filter(d=>d.totalRain>3).length;
+  const dry=Object.values(weatherData).filter(d=>d.totalRain===0).length;
+  const peak=Object.values(weatherData).filter(d=>d.peakRain>2).length;
+  document.getElementById('stats-bar').innerHTML=[
+    {l:'WALLET',v:'$86.16',c:'var(--green)'},{l:'NET P&L',v:'+$55',c:'var(--green)'},{l:'ROI',v:'+311%',c:'var(--green)'},
+    {l:'INVESTED',v:'$19.14',c:'var(--t1)'},{l:'RAIN >3mm',v:rain,c:'var(--violet)'},
+    {l:'RAIN@PEAK',v:peak,c:'var(--red)'},{l:'DRY',v:dry,c:'var(--bluel)'}
+  ].map(s=>`<div class="stat"><div class="stat-l">${s.l}</div><div class="stat-v" style="color:${s.c}">${s.v}</div></div>`).join('');
+}
 
-h+='<div class="slbl" style="margin-top:12px">Key Lessons</div>';
-h+='<div style="font-size:9px;color:var(--t1);line-height:1.8">'+
-'<span style="color:var(--green)">✓</span> TAF TX = gold in DRY (Shanghai TX21→21°C)<br>'+
-'<span style="color:var(--red)">✗</span> TAF TX = WRONG in rain (CQ TX24→16°C, -8°C!)<br>'+
-'<span style="color:var(--violet)">⚡</span> Rain adj: -3°C for >3mm (confirmed)<br>'+
-'<span style="color:var(--amber)">⚠</span> NEVER leave gaps (SHA: had 20+22, NOT 21)<br>'+
-'<span style="color:var(--green)">✓</span> Early entry = best prices (CQ@1.5¢=37x)<br>'+
-'<span style="color:var(--amber)">⚠</span> Airport offsets: Seoul -8.9°C, SHA -5.7°C<br>'+
-'<span style="color:var(--red)">✗</span> Shenzhen station varies by day<br>'+
-'<span style="color:var(--violet)">⚡</span> °C cities > °F for edge & payout</div>';
+function showTab(tab,btn){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  renderPanel();
+}
 
-h+='<div class="sbox" style="margin-top:12px"><div style="font-size:8px;letter-spacing:1.5px;margin-bottom:5px;color:var(--amber)">ACTION ITEMS</div>'+
-'<div style="font-size:10px;color:var(--t1);line-height:1.8;font-family:var(--sans)">'+
-'1. <b style="color:var(--red)">Deploy auto_redeem_v2.py</b> → $36.50 stuck<br>'+
-'2. <b style="color:var(--violet)">Place rain bets</b> (Wuhan+Ankara = $8)<br>'+
-'3. <b style="color:var(--bb)">Place kern bets</b> (Top 5 = $20)<br>'+
-'4. <b style="color:var(--amber)">Verify stations</b> (14 new cities)</div></div>';
-el.innerHTML=h}
-rn();
-</script></body></html>
+function renderPanel(){
+  const el=document.getElementById('panel-content');
+  if(currentTab==='scanner')renderScanner(el);
+  else if(currentTab==='bets')renderBets(el);
+  else renderPerf(el);
+}
+
+function renderScanner(el){
+  const sorted=[...CITIES].map(c=>{
+    const d=weatherData[c.n];const mk=marketData[c.n];
+    return{...c,w:d,mk,rain:d?d.totalRain:0,peakRain:d?d.peakRain:0,peak:d?d.peak:0};
+  }).sort((a,b)=>{
+    if(a.peakRain>2&&b.peakRain<=2)return-1;if(b.peakRain>2&&a.peakRain<=2)return 1;
+    if(a.rain>3&&b.rain<=3)return-1;if(b.rain>3&&a.rain<=3)return 1;
+    return(b.mk?.vol||0)-(a.mk?.vol||0);
+  });
+  
+  let html=`<div class="filters">
+    <button class="fbtn ${currentFilter==='all'?'on':''}" onclick="setFilter('all')">All</button>
+    <button class="fbtn ${currentFilter==='rain'?'on':''}" onclick="setFilter('rain')">🌧 Rain</button>
+    <button class="fbtn ${currentFilter==='dry'?'on':''}" onclick="setFilter('dry')">☀ Dry</button>
+    <button class="fbtn ${currentFilter==='bet'?'on':''}" onclick="setFilter('bet')">💰 Our Bets</button>
+  </div>`;
+  
+  let lastSection='';
+  sorted.forEach((c,i)=>{
+    const d=c.w;if(!d)return;
+    const isRain=d.totalRain>3;const isDry=d.totalRain===0;
+    const hasBet=c.hasBets||['Munich','Ankara'].includes(c.n);
+    
+    if(currentFilter==='rain'&&!isRain)return;
+    if(currentFilter==='dry'&&!isDry)return;
+    if(currentFilter==='bet'&&!hasBet)return;
+    
+    const section=d.peakRain>2?'rain@peak':isRain?'rain':'other';
+    if(section!==lastSection){
+      const labels={'rain@peak':'🌧 RAIN DURING PEAK','rain':'🌧 RAIN CITIES','other':'ALL CITIES'};
+      html+=`<div class="section-label">${labels[section]||section}</div>`;
+      lastSection=section;
+    }
+    
+    const v=getVerdict(d);
+    const u=c.u==='F'?'°F':'°C';
+    const peakD=c.u==='F'?Math.round(d.peak*9/5+32)+u:d.peak+u;
+    const cls=hasBet?'bet':d.peakRain>2?'rain':isRain?'edge':'';
+    const minT=Math.min(...d.temps),maxT=Math.max(...d.temps),range=maxT-minT||1;
+    
+    html+=`<div class="city-card ${cls}" onclick="flyTo('${c.n}')">
+      <div class="cc-head">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="cc-name">${c.n}</span>
+          <span class="tag tag-region">${c.r}</span>
+          ${isRain?`<span class="tag tag-rain">🌧${d.totalRain}mm</span>`:''}
+          ${isDry?`<span class="tag tag-dry">DRY</span>`:''}
+          ${hasBet?`<span class="tag tag-bet">BET</span>`:''}
+        </div>
+        <span class="cc-temp" style="color:${tempColor(d.peak)}">${peakD}</span>
+      </div>
+      <div class="cc-meta">
+        <span>Peak @${d.peakH}:00</span>
+        <span>Cloud: ${d.avgPeakCloud}%</span>
+        <span>Wind: ${d.maxWind}km/h</span>
+        ${c.mk?`<span>Mkt: ${c.mk.t1}@${c.mk.p1}%</span>`:''}
+      </div>
+      <div style="font-size:7px;color:var(--t3);display:flex;justify-content:space-between">
+        <span>TEMP</span><span>0h──────6h──────12h──────18h──────23h</span>
+      </div>
+      <div class="temp-row">${d.temps.map((t,j)=>`<div class="temp-fill" style="height:${Math.max(8,((t-minT)/range)*100)}%;background:${tempColor(t)}66;${j===d.peakH?'outline:1px solid var(--amber)':''}" data-tip="${j}:00 ${t}°C"></div>`).join('')}</div>
+      <div style="font-size:7px;color:var(--t3);margin-top:3px">RAIN</div>
+      <div class="rain-row">${d.precip.map((p,j)=>`<div class="rain-bar" style="background:${rainColor(p)}" data-tip="${j}:00 ${p}mm"></div>`).join('')}</div>
+      <div class="time-labels"><span>0</span><span></span><span></span><span></span><span></span><span></span><span>6</span><span></span><span></span><span></span><span></span><span></span><span>12</span><span></span><span></span><span></span><span></span><span></span><span>18</span><span></span><span></span><span></span><span></span><span>23</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <span class="verdict ${v.cls}">${v.text}</span>
+        ${c.mk?`<span class="mkt-info">${c.mk.t1} @${c.mk.p1}%</span>`:''}
+      </div>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+function renderBets(el){
+  const bets=[
+    {city:'Munich',date:'Mar 29',temps:'≤2°C, 3°C, 4°C, 5°C, 6°C',cost:'$9.12',status:'Placed',best:'$200 (3°C)',note:'Google: 4°C + Snow'},
+    {city:'Ankara',date:'Mar 29',temps:'7°C, 8°C, 9°C',cost:'$5.00',status:'Placed',best:'$100 (7°C)',note:'Google: 9°C, airport -1.4°C'},
+    {city:'Buenos Aires',date:'Mar 29',temps:'23-28°C',cost:'$5.02',status:'Open',best:'$3.69',note:'Rain play 10.8mm'},
+  ];
+  
+  let html='<div class="section-label">ACTIVE POSITIONS — MAR 29</div>';
+  bets.forEach(b=>{
+    html+=`<div class="city-card bet">
+      <div class="cc-head"><span class="cc-name">${b.city}</span><span style="font-size:11px;color:var(--green);font-weight:600">${b.cost}</span></div>
+      <div style="font-size:10px;color:var(--t1);margin:3px 0">${b.temps}</div>
+      <div class="cc-meta"><span>Best: ${b.best}</span><span>${b.status}</span></div>
+      <div style="font-size:9px;color:var(--t2)">${b.note}</div>
+    </div>`;
+  });
+  
+  html+=`<div class="section-label">PENDING REDEMPTION</div>
+    <div class="city-card"><div class="cc-head"><span class="cc-name">Seoul 12°C d28</span><span style="color:var(--amber)">~$6.50</span></div>
+    <div style="font-size:9px;color:var(--t2)">Auto-redeem running every 10min</div></div>`;
+  
+  html+=`<div style="margin-top:12px;padding:10px;background:var(--card);border:1px solid var(--bdr);border-radius:6px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+      <div><span style="color:var(--t2)">Total invested:</span></div><div style="text-align:right;font-weight:600">$19.14</div>
+      <div><span style="color:var(--t2)">Best possible:</span></div><div style="text-align:right;color:var(--green);font-weight:600">$200 (Munich 3°C)</div>
+      <div><span style="color:var(--t2)">Pending redeem:</span></div><div style="text-align:right;color:var(--amber);font-weight:600">~$6.50</div>
+      <div><span style="color:var(--t2)">Available:</span></div><div style="text-align:right;font-weight:600">$86.16</div>
+    </div></div>`;
+  
+  el.innerHTML=html;
+}
+
+function renderPerf(el){
+  const trades=[
+    {d:'Mar 27',n:'Chongqing 17°C',c:'$1.50',p:'$55.56',pl:'+$54.06',w:true},
+    {d:'Mar 27',n:'BA 26°C',c:'$2.10',p:'$30.40',pl:'+$28.30',w:true},
+    {d:'Mar 28',n:'Seoul 12°C',c:'$1.04',p:'$6.50',pl:'+$5.46',w:true},
+    {d:'Mar 28',n:'Seoul 11,15°C',c:'$2.04',p:'$0',pl:'-$2.04',w:false},
+    {d:'Mar 28',n:'Shanghai 19,20,22,23',c:'$5.00',p:'$0',pl:'-$5.00',w:false},
+    {d:'Mar 28',n:'CQ 17,18,20,21',c:'$4.77',p:'$0',pl:'-$4.77',w:false},
+    {d:'Mar 28',n:'Atlanta 74°F+',c:'$1.00',p:'$0',pl:'-$1.00',w:false},
+  ];
+  
+  let html=`<div style="padding:10px;background:var(--greend);border:1px solid rgba(0,217,126,.2);border-radius:6px;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:9px;color:var(--green);letter-spacing:1px;margin-bottom:2px">NET P&L (WEATHER ONLY)</div>
+      <div style="font-size:28px;font-weight:800;color:var(--green);font-family:var(--sans)">+$55.42</div></div>
+      <div style="text-align:right"><div style="font-size:10px;color:var(--t2)">$22.45 invested</div>
+      <div style="font-size:16px;font-weight:700;color:var(--bluel);font-family:var(--sans)">+311% ROI</div></div>
+    </div></div>`;
+  
+  html+='<div class="section-label">TRADE HISTORY</div>';
+  trades.forEach(t=>{
+    html+=`<div class="perf-row">
+      <div><div style="font-size:10px;font-weight:600;color:${t.w?'var(--green)':'var(--red)'}">${t.n}</div>
+      <div style="font-size:8px;color:var(--t3)">${t.d} · ${t.c} → ${t.p}</div></div>
+      <div style="font-size:13px;font-weight:700;color:${t.w?'var(--green)':'var(--red)'};font-family:var(--sans)">${t.pl}</div>
+    </div>`;
+  });
+  
+  html+=`<div class="section-label" style="margin-top:14px">KEY LESSONS</div>
+    <div style="font-size:10px;line-height:1.8;color:var(--t1)">
+      <span style="color:var(--green)">✓</span> TAF TX = gold in DRY<br>
+      <span style="color:var(--red)">✗</span> TAF TX = WRONG in rain (CQ -8°C!)<br>
+      <span style="color:var(--violet)">⚡</span> Rain adj: -3°C for >3mm<br>
+      <span style="color:var(--amber)">⚠</span> NEVER leave gaps in ladder<br>
+      <span style="color:var(--green)">✓</span> Buy cheap (<10¢), skip consensus<br>
+      <span style="color:var(--blue)">→</span> neobrother: ladder at 0.2-15¢ only
+    </div>`;
+  el.innerHTML=html;
+}
+
+function setFilter(f){
+  currentFilter=f;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  renderPanel();
+}
+
+function flyTo(name){
+  const c=CITIES.find(x=>x.n===name);
+  if(c)map.flyTo([c.lat,c.lon],6,{duration:1});
+  selectCity(name);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+setInterval(()=>{
+  document.getElementById('clock').textContent=new Date().toISOString().replace('T',' ').substring(0,19)+' UTC';
+},1000);
+
+async function init(){
+  await fetchWeather();
+  renderTicker();
+  renderStats();
+  renderPanel();
+  document.getElementById('fetch-status').textContent='Fetching market prices...';
+  await fetchMarkets();
+  renderPanel();
+  document.getElementById('fetch-status').textContent=`${Object.keys(weatherData).length} cities · Live data · Open-Meteo + Polymarket`;
+}
+init();
+</script>
+</body></html>
