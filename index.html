@@ -816,8 +816,8 @@ function renderScanner(el){
       </div>
       <div class="cc-meta">
         ${e.sources.map(s=>`<span>${s.name}: ${Math.round(s.val*10)/10}°C</span>`).join('')}
-        ${e.offset?`<span class="src-adj">✈${e.offset>0?'+':''}${e.offset}°C</span>`:''}
-        ${e.rainAdj?`<span class="src-adj">🌧${e.rainAdj}°C</span>`:''}
+        ${IS_PRIVATE&&e.offset?`<span class="src-adj">✈${e.offset>0?'+':''}${e.offset}°C</span>`:''}
+        ${IS_PRIVATE&&e.rainAdj?`<span class="src-adj">🌧${e.rainAdj}°C</span>`:''}
         ${d.totalRain>0?`<span class="tag tag-rain">${d.totalRain}mm</span>`:'<span class="tag tag-dry">DRY</span>'}
       </div>`;
     
@@ -966,7 +966,7 @@ function selectCity(name){
   const u=c.u==='F'?'°F':'°C';
   
   let html=`<div style="font-size:15px;font-weight:700;color:#fff;font-family:var(--sans)">${name}</div>
-    <div style="font-size:12px;color:var(--t2);margin:2px 0">${c.icao} · ${c.r} · ${formatDateShort(selectedDate)}</div>`;
+    <div style="font-size:12px;color:var(--t2);margin:2px 0">${IS_PRIVATE?c.icao+' · ':''}${c.r} · ${formatDateShort(selectedDate)}</div>`;
   
   if(e){
     html+=`<div style="font-size:24px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans);margin:4px 0">${e.displayTemp}${u}</div>`;
@@ -974,8 +974,8 @@ function selectCity(name){
     html+=`<div style="font-size:12px;color:var(--t2)">`;
     e.sources.forEach(s=>{html+=`${s.name}: ${Math.round(s.val*10)/10}°C · `;});
     html+=`Rain: ${d.totalRain}mm`;
-    if(e.offset)html+=` · ✈${e.offset>0?'+':''}${e.offset}°C`;
-    if(e.rainAdj)html+=` · 🌧${e.rainAdj}°C`;
+    if(IS_PRIVATE&&e.offset)html+=` · ✈${e.offset>0?'+':''}${e.offset}°C`;
+    if(IS_PRIVATE&&e.rainAdj)html+=` · 🌧${e.rainAdj}°C`;
     html+=`</div>`;
     
     if(e.hasMarket){
