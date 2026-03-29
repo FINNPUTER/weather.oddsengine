@@ -4,126 +4,129 @@
 <title>Weather Intelligence — OddsEngine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-:root{--bg:#04080d;--bg1:#080e16;--bg2:#0c131d;--card:#0e1620;--card2:#111c28;--bdr:#152030;--bdrh:#1e3048;--t1:#f0f4f8;--t2:#9cb0c4;--t3:#5a7a94;--blue:#1e90ff;--bluel:#3aa0ff;--blued:rgba(30,144,255,.08);--green:#00d97e;--greend:rgba(0,217,126,.08);--amber:#f5a623;--amberd:rgba(245,166,35,.08);--red:#ff4757;--redd:rgba(255,71,87,.08);--violet:#8b5cf6;--violetd:rgba(139,92,246,.08);--cyan:#06d6a0;--mono:'IBM Plex Mono',monospace;--sans:'Outfit',sans-serif}
+:root{--bg:#04080d;--bg1:#080e16;--bg2:#0c131d;--card:#0e1620;--card2:#111c28;--bdr:#152030;--bdrh:#1e3048;--t1:#ffffff;--t2:#b8ccdb;--t3:#7a9ab5;--blue:#1e90ff;--bluel:#3aa0ff;--blued:rgba(30,144,255,.08);--green:#00d97e;--greend:rgba(0,217,126,.08);--amber:#f5a623;--amberd:rgba(245,166,35,.08);--red:#ff4757;--redd:rgba(255,71,87,.08);--violet:#8b5cf6;--violetd:rgba(139,92,246,.08);--cyan:#06d6a0;--mono:'IBM Plex Mono',monospace;--sans:'Outfit',sans-serif}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:14px;-webkit-font-smoothing:antialiased}
 
-.layout{display:grid;grid-template-rows:auto auto auto 1fr auto;grid-template-columns:1fr 400px;height:100vh}
-.header{grid-column:1/-1;border-bottom:1px solid var(--bdr);padding:6px 20px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--bg2),var(--bg))}
-.ticker{grid-column:1/-1;border-bottom:1px solid var(--bdr);background:var(--bg1);padding:3px 0;overflow:hidden;white-space:nowrap}
+.layout{display:grid;grid-template-rows:auto auto auto 1fr auto;grid-template-columns:1fr 420px;height:100vh}
+.header{grid-column:1/-1;border-bottom:1px solid var(--bdr);padding:10px 20px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,var(--bg2),var(--bg))}
+.ticker{grid-column:1/-1;border-bottom:1px solid var(--bdr);background:var(--bg1);padding:5px 0;overflow:hidden;white-space:nowrap;font-size:13px}
 .ticker-inner{display:inline-flex;gap:28px;animation:scroll 100s linear infinite}
 @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .stats{grid-column:1/-1;display:flex;border-bottom:1px solid var(--bdr);background:var(--bg1)}
-.stat{flex:1;padding:6px 14px;border-right:1px solid var(--bdr)}.stat:last-child{border:none}
-.stat-l{font-size:8px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase}
-.stat-v{font-size:14px;font-weight:600;font-family:var(--sans)}
+.stat{flex:1;padding:10px 14px;border-right:1px solid var(--bdr)}.stat:last-child{border:none}
+.stat-l{font-size:13px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+.stat-v{font-size:18px;font-weight:700;font-family:var(--sans)}
 
 .map-wrap{position:relative;overflow:hidden}
 .panel{border-left:1px solid var(--bdr);display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
 .tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--bg1)}
-.tab{flex:1;padding:7px;border:none;background:transparent;color:var(--t3);font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
+.tab{flex:1;padding:10px;border:none;background:transparent;color:var(--t3);font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
 .tab:hover{color:var(--t2)}.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
-.panel-body{flex:1;overflow-y:auto;padding:10px;scrollbar-width:thin;scrollbar-color:var(--bdr) transparent}
+.panel-body{flex:1;overflow-y:auto;padding:12px;scrollbar-width:thin;scrollbar-color:var(--bdr) transparent}
 
-.footer{grid-column:1/-1;border-top:1px solid var(--bdr);padding:4px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--bg1)}
+.footer{grid-column:1/-1;border-top:1px solid var(--bdr);padding:6px 20px;display:flex;justify-content:space-between;align-items:center;background:var(--bg1)}
 
 /* Header */
-.brand{font-size:13px;font-weight:700;letter-spacing:3px;color:#fff;text-transform:uppercase;font-family:var(--sans)}
+.brand{font-size:16px;font-weight:700;letter-spacing:3px;color:#fff;text-transform:uppercase;font-family:var(--sans)}
 .brand span{color:var(--blue)}
-.brand-sub{font-size:9px;color:var(--t2);letter-spacing:1px}
+.brand-sub{font-size:11px;color:var(--t2);letter-spacing:1px}
 @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 
 /* Date navigation */
-.date-nav{display:flex;align-items:center;gap:3px;background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:3px}
-.date-btn{padding:4px 10px;border:none;background:transparent;color:var(--t2);font-family:var(--mono);font-size:10px;font-weight:500;cursor:pointer;border-radius:4px;transition:.15s;white-space:nowrap}
+.date-nav{display:flex;align-items:center;gap:3px;background:var(--bg1);border:1px solid var(--bdr);border-radius:6px;padding:4px}
+.date-btn{padding:6px 12px;border:none;background:transparent;color:var(--t2);font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;border-radius:4px;transition:.15s;white-space:nowrap}
 .date-btn:hover{color:var(--t1);background:var(--bg2)}
 .date-btn.on{color:var(--blue);background:var(--blued);font-weight:600}
 .date-btn.no-market{opacity:.4}
-.date-arrow{padding:4px 8px;border:none;background:transparent;color:var(--t2);font-size:14px;cursor:pointer;border-radius:4px}
+.date-arrow{padding:6px 10px;border:none;background:transparent;color:var(--t2);font-size:16px;cursor:pointer;border-radius:4px}
 .date-arrow:hover{color:var(--t1);background:var(--bg2)}
 
 /* Cards */
-.city-card{background:var(--card);border:1px solid var(--bdr);border-radius:6px;padding:10px 12px;margin-bottom:5px;cursor:pointer;transition:all .15s}
+.city-card{background:var(--card);border:1px solid var(--bdr);border-radius:6px;padding:12px 14px;margin-bottom:6px;cursor:pointer;transition:all .15s}
 .city-card:hover{border-color:var(--bdrh);background:var(--card2)}
 .city-card.edge-strong{border-left:3px solid var(--green)}
 .city-card.edge-med{border-left:3px solid var(--blue)}
 .city-card.edge-rain{border-left:3px solid var(--violet)}
 .city-card.edge-none{border-left:3px solid var(--bdr)}
 .city-card.has-bet{box-shadow:inset 0 0 0 1px rgba(0,217,126,.15)}
-.cc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
-.cc-name{font-size:12px;font-weight:600;color:#fff;font-family:var(--sans)}
-.cc-temp{font-size:18px;font-weight:800;font-family:var(--sans)}
-.cc-meta{display:flex;gap:5px;font-size:9px;color:var(--t2);flex-wrap:wrap}
-.tag{padding:1px 6px;border-radius:3px;font-size:8px;font-weight:600;letter-spacing:.3px}
+.cc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.cc-name{font-size:15px;font-weight:600;color:#fff;font-family:var(--sans)}
+.cc-temp{font-size:20px;font-weight:800;font-family:var(--sans)}
+.cc-meta{display:flex;gap:6px;font-size:12px;color:var(--t2);flex-wrap:wrap}
+.tag{padding:2px 8px;border-radius:3px;font-size:13px;font-weight:600;letter-spacing:.3px}
 .tag-rain{background:var(--violetd);color:var(--violet)}
 .tag-dry{background:var(--greend);color:var(--green)}
 .tag-edge{background:var(--blued);color:var(--bluel)}
 .tag-bet{background:var(--greend);color:var(--green)}
-.tag-region{background:var(--blued);color:var(--t2);font-size:7px}
+.tag-region{background:var(--blued);color:var(--t2);font-size:12px}
 .tag-buy{background:rgba(0,217,126,.15);color:var(--green);font-weight:700;letter-spacing:.5px}
 .tag-skip{background:var(--bg2);color:var(--t3)}
 .tag-lotto{background:rgba(245,166,35,.1);color:var(--amber)}
 
 /* Source comparison */
-.src-row{display:flex;gap:4px;font-size:9px;margin:3px 0;align-items:center}
-.src-label{width:28px;color:var(--t3);font-weight:600;font-size:7px;letter-spacing:.5px;text-transform:uppercase}
+.src-row{display:flex;gap:4px;font-size:12px;margin:3px 0;align-items:center}
+.src-label{width:32px;color:var(--t3);font-weight:600;font-size:13px;letter-spacing:.5px;text-transform:uppercase}
 .src-val{color:var(--t1);font-weight:500}
-.src-adj{color:var(--amber);font-size:8px}
+.src-adj{color:var(--amber);font-size:11px}
 
 /* Edge meter */
-.edge-meter{height:4px;border-radius:2px;background:var(--bg2);margin:4px 0;overflow:hidden}
+.edge-meter{height:5px;border-radius:2px;background:var(--bg2);margin:4px 0;overflow:hidden}
 .edge-fill{height:100%;border-radius:2px;transition:width .3s}
 
 /* Rain bars */
-.rain-row{display:flex;gap:1px;height:12px;margin:2px 0}
+.rain-row{display:flex;gap:1px;height:14px;margin:2px 0}
 .rain-bar{flex:1;border-radius:1px;min-width:0}
-.temp-row{display:flex;gap:1px;height:18px;margin:2px 0;align-items:flex-end}
+.temp-row{display:flex;gap:1px;height:20px;margin:2px 0;align-items:flex-end}
 .temp-fill{flex:1;border-radius:1px 1px 0 0;min-width:0}
 
 /* Market row */
-.mkt-row{display:flex;gap:2px;flex-wrap:wrap;margin:3px 0}
-.mkt-chip{padding:2px 5px;border-radius:3px;font-size:8px;font-weight:500;background:var(--bg2);color:var(--t2);border:1px solid transparent}
+.mkt-row{display:flex;gap:3px;flex-wrap:wrap;margin:4px 0}
+.mkt-chip{padding:3px 7px;border-radius:3px;font-size:11px;font-weight:500;background:var(--bg2);color:var(--t2);border:1px solid transparent}
 .mkt-chip.hot{border-color:var(--green);color:var(--green);background:var(--greend)}
 .mkt-chip.warm{border-color:var(--blue);color:var(--bluel);background:var(--blued)}
 
-.section-label{font-size:8px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--bdr)}
-.loading{text-align:center;padding:30px;color:var(--t2)}
+.section-label{font-size:11px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--bdr);font-weight:600}
+.loading{text-align:center;padding:30px;color:var(--t2);font-size:14px}
 
-/* Leaflet overrides */
+/* Windy & Leaflet overrides */
 .leaflet-container{background:var(--bg)!important}
 .leaflet-control-zoom a{background:var(--card)!important;color:var(--bluel)!important;border-color:var(--bdr)!important}
 .leaflet-control-attribution{display:none!important}
+#windy{width:100%;height:100%}
+#windy .leaflet-top.leaflet-left{left:160px!important}
+#bottom{display:none!important}
+.progress-bar{display:none!important}
 
 /* Custom markers */
-.city-marker{border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-weight:700;font-size:10px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);cursor:pointer;transition:transform .2s}
+.city-marker{border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-weight:700;font-size:12px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);cursor:pointer;transition:transform .2s}
 .city-marker:hover{transform:scale(1.3);z-index:1000!important}
-.city-label{font-family:var(--mono);font-size:9px;font-weight:500;color:rgba(255,255,255,.85);white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+.city-label{font-family:var(--mono);font-size:11px;font-weight:600;color:rgba(255,255,255,.9);white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.9)}
 
 /* Popup */
 .city-popup .leaflet-popup-content-wrapper{background:rgba(12,19,29,.96)!important;border:1px solid var(--bdrh)!important;border-radius:8px!important;color:var(--t1)!important;box-shadow:0 8px 32px rgba(0,0,0,.6)!important;backdrop-filter:blur(12px)}
 .city-popup .leaflet-popup-tip{background:rgba(12,19,29,.96)!important;border-color:var(--bdrh)!important}
-.city-popup .leaflet-popup-content{margin:12px 14px!important;font-family:var(--mono)!important;font-size:11px!important}
+.city-popup .leaflet-popup-content{margin:14px 16px!important;font-family:var(--mono)!important;font-size:13px!important}
 
 /* Perf tab */
-.perf-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bdr)}
+.perf-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bdr)}
 
-.flink{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);text-decoration:none;padding:3px 10px;border:1px solid rgba(30,144,255,.3);border-radius:4px}.flink:hover{background:var(--blued)}
+.flink{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);text-decoration:none;padding:4px 12px;border:1px solid rgba(30,144,255,.3);border-radius:4px}.flink:hover{background:var(--blued)}
 
 /* Filter buttons */
-.filters{display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap}
-.fbtn{padding:3px 7px;font-size:8px;font-weight:600;letter-spacing:.5px;border:1px solid var(--bdr);background:transparent;color:var(--t2);border-radius:3px;cursor:pointer;font-family:var(--mono);transition:.15s}
+.filters{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.fbtn{padding:5px 10px;font-size:11px;font-weight:600;letter-spacing:.5px;border:1px solid var(--bdr);background:transparent;color:var(--t2);border-radius:4px;cursor:pointer;font-family:var(--mono);transition:.15s}
 .fbtn:hover{border-color:var(--bdrh);color:var(--t1)}.fbtn.on{border-color:var(--blue);color:var(--bluel);background:var(--blued)}
 
 /* Weather layer controls */
-.wlayer-panel{position:absolute;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:2px}
-.wlayer-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(14,22,32,.92);border:1px solid var(--bdr);border-radius:5px;color:var(--t2);font-family:var(--mono);font-size:9px;font-weight:500;cursor:pointer;transition:all .15s;backdrop-filter:blur(8px);min-width:130px}
+.wlayer-panel{position:absolute;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:3px}
+.wlayer-btn{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(14,22,32,.92);border:1px solid var(--bdr);border-radius:5px;color:var(--t2);font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;backdrop-filter:blur(8px);min-width:150px}
 .wlayer-btn:hover{border-color:var(--bdrh);color:var(--t1)}
 .wlayer-btn.on{border-color:var(--blue);color:var(--bluel);background:rgba(30,144,255,.08)}
-.wlayer-btn .wl-dot{width:5px;height:5px;border-radius:50%;margin-left:auto;opacity:0;transition:.15s}
+.wlayer-btn .wl-dot{width:6px;height:6px;border-radius:50%;margin-left:auto;opacity:0;transition:.15s}
 .wlayer-btn.on .wl-dot{opacity:1}
 
 @media(max-width:900px){
@@ -141,7 +144,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px
   </div>
   <div class="date-nav" id="date-nav"></div>
   <div style="display:flex;align-items:center;gap:12px">
-    <div style="text-align:right"><div style="font-size:8px;color:var(--t3);letter-spacing:1px">SCAN CYCLE</div><div id="clock" style="font-size:11px;color:var(--blue)">—</div></div>
+    <div style="text-align:right"><div style="font-size:11px;color:var(--t3);letter-spacing:1px">SCAN CYCLE</div><div id="clock" style="font-size:11px;color:var(--blue)">—</div></div>
     <div class="dot"></div>
   </div>
 </div>
@@ -154,13 +157,14 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px
 
 <!-- MAP -->
 <div class="map-wrap">
-  <div id="map" style="width:100%;height:100%"></div>
+  <div id="windy" style="width:100%;height:100%"></div>
   <div class="wlayer-panel">
-    <div class="wlayer-btn" data-layer="temp_new" onclick="toggleWLayer(this)">🌡 Temperature<span class="wl-dot" style="background:#f87171"></span></div>
-    <div class="wlayer-btn" data-layer="pressure_new" onclick="toggleWLayer(this)">🔵 Pressure<span class="wl-dot" style="background:#60a5fa"></span></div>
-    <div class="wlayer-btn" data-layer="wind_new" onclick="toggleWLayer(this)">💨 Wind<span class="wl-dot" style="background:#22d3ee"></span></div>
-    <div class="wlayer-btn" data-layer="precipitation_new" onclick="toggleWLayer(this)">🌧 Rain<span class="wl-dot" style="background:#8b5cf6"></span></div>
-    <div class="wlayer-btn" data-layer="clouds_new" onclick="toggleWLayer(this)">☁ Clouds<span class="wl-dot" style="background:#94a3b8"></span></div>
+    <div class="wlayer-btn on" onclick="setWindyOverlay('wind',this)">🌪 Wind<span class="wl-dot" style="background:var(--amber)"></span></div>
+    <div class="wlayer-btn" onclick="setWindyOverlay('temp',this)">🌡 Temperature<span class="wl-dot" style="background:#f87171"></span></div>
+    <div class="wlayer-btn" onclick="setWindyOverlay('rain',this)">🌧 Rain<span class="wl-dot" style="background:#8b5cf6"></span></div>
+    <div class="wlayer-btn" onclick="setWindyOverlay('clouds',this)">☁ Clouds<span class="wl-dot" style="background:#94a3b8"></span></div>
+    <div class="wlayer-btn" onclick="setWindyOverlay('pressure',this)">🔵 Pressure<span class="wl-dot" style="background:#60a5fa"></span></div>
+    <div class="wlayer-btn" onclick="setWindyOverlay('gust',this)">💨 Gusts<span class="wl-dot" style="background:#22d3ee"></span></div>
   </div>
 </div>
 
@@ -177,14 +181,14 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:12px
 
 <!-- FOOTER -->
 <div class="footer">
-  <div style="font-size:9px;color:var(--t2)" id="fetch-status">Loading...</div>
-  <div style="font-size:7px;color:var(--t3)">Data: Open-Meteo · OpenWeatherMap · Polymarket</div>
+  <div style="font-size:12px;color:var(--t2)" id="fetch-status">Loading...</div>
+  <div style="font-size:11px;color:var(--t3)">Data: Open-Meteo · OpenWeatherMap · Polymarket</div>
   <a href="https://oddsengine.live" class="flink">OddsEngine →</a>
 </div>
 
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
 <script>
 // ═══════════════════════════════════════════
 // CITY DATA — with airport offsets
@@ -228,29 +232,49 @@ const CITIES=[
 ];
 
 const OWM_KEY='e75a83526c2d947cd221d23a0e3e6ad2';
-const POSITIONS_API='https://oddsengine-weather-api-production.up.railway.app/positions';
+const WINDY_KEY='Z7YcE3KBcjQDfzmRKdCJdxWsZmAgRUkj';
+const PROXY_BASE='https://oddsengine-weather-api-production.up.railway.app';
+const POSITIONS_API=PROXY_BASE+'/positions';
 const MONTHS={1:'january',2:'february',3:'march',4:'april',5:'may',6:'june',7:'july',8:'august',9:'september',10:'october',11:'november',12:'december'};
 
 let selectedDate='';
 let weatherData={}, owmData={}, marketData={}, positionsData=[], positionsLoaded=false;
 let currentTab='scanner', currentFilter='all';
 let dateButtons=[];
+let map=null, L=null, windyStore=null;
 
 // ═══════════════════════════════════════════
-// MAP INIT
+// WINDY MAP INIT
 // ═══════════════════════════════════════════
-const map=L.map('map',{zoomControl:true,attributionControl:false,minZoom:2,maxZoom:10}).setView([25,20],2.5);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
+const windyOptions={
+  key:WINDY_KEY,
+  lat:25,lon:20,zoom:3,
+  overlay:'wind',
+  verbose:false
+};
 
-const owmLayers={};
-['temp_new','pressure_new','wind_new','precipitation_new','clouds_new'].forEach(layer=>{
-  owmLayers[layer]=L.tileLayer(`https://tile.openweathermap.org/map/${layer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`,{maxZoom:19,opacity:0.55});
-});
+function initWindy(){
+  return new Promise(resolve=>{
+    windyInit(windyOptions, api=>{
+      const{map:m, store, overlays, picker, utils, broadcast}=api;
+      map=m;
+      L=window.L;
+      windyStore=store;
+      
+      // Set dark mode
+      store.set('darkMode',true);
+      
+      resolve(api);
+    });
+  });
+}
 
-function toggleWLayer(btn){
-  const layer=btn.dataset.layer;
-  btn.classList.toggle('on');
-  btn.classList.contains('on')?owmLayers[layer].addTo(map):map.removeLayer(owmLayers[layer]);
+// Windy overlay switching
+function setWindyOverlay(overlay, btn){
+  if(!windyStore)return;
+  windyStore.set('overlay', overlay);
+  document.querySelectorAll('.wlayer-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
 }
 
 const markers={};
@@ -262,7 +286,7 @@ function tempColor(t){
 
 function addCityMarkers(){
   CITIES.forEach(c=>{
-    const icon=L.divIcon({className:'',html:`<div class="city-marker" style="width:28px;height:28px;background:#33445566;border-color:#334455"><span style="font-size:9px">—</span></div><div class="city-label" style="position:absolute;top:30px;left:50%;transform:translateX(-50%)">${c.n}</div>`,iconSize:[28,42],iconAnchor:[14,14]});
+    const icon=L.divIcon({className:'',html:`<div class="city-marker" style="width:34px;height:34px;background:#33445566;border-color:#334455"><span style="font-size:12px">—</span></div><div class="city-label" style="position:absolute;top:36px;left:50%;transform:translateX(-50%)">${c.n}</div>`,iconSize:[34,50],iconAnchor:[17,17]});
     const m=L.marker([c.lat,c.lon],{icon}).addTo(map);
     m.cityData=c;
     m.on('click',()=>selectCity(c.n));
@@ -276,10 +300,10 @@ function updateMarker(name,temp,rain,hasEdge){
   const col=tempColor(temp);
   const rainDot=rain>3?'🌧':'';
   const edgeRing=hasEdge?`box-shadow:0 0 0 3px ${col}44,0 0 14px rgba(30,144,255,.3)`:'';
-  m.setIcon(L.divIcon({className:'',html:`<div class="city-marker" style="width:32px;height:32px;background:${col}55;border-color:${col};${edgeRing}"><span style="font-size:10px">${Math.round(temp)}</span></div><div class="city-label" style="position:absolute;top:34px;left:50%;transform:translateX(-50%)">${name} ${rainDot}</div>`,iconSize:[32,48],iconAnchor:[16,16]}));
+  m.setIcon(L.divIcon({className:'',html:`<div class="city-marker" style="width:38px;height:38px;background:${col}55;border-color:${col};${edgeRing}"><span style="font-size:13px">${Math.round(temp)}</span></div><div class="city-label" style="position:absolute;top:40px;left:50%;transform:translateX(-50%)">${name} ${rainDot}</div>`,iconSize:[38,54],iconAnchor:[19,19]}));
 }
 
-addCityMarkers();
+// addCityMarkers called from init after Windy loads
 
 // ═══════════════════════════════════════════
 // DATE MANAGEMENT
@@ -328,12 +352,12 @@ function shiftDates(delta){dateOffset+=delta;buildDateNav();}
 async function fetchWeatherOM(){
   weatherData={};
   let done=0;
-  const endDate=getDateStr(7); // fetch 7 days at once
-  for(let i=0;i<CITIES.length;i+=5){
-    const batch=CITIES.slice(i,i+5);
+  for(let i=0;i<CITIES.length;i+=3){
+    const batch=CITIES.slice(i,i+3);
     await Promise.all(batch.map(async c=>{
       try{
         const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m&start_date=${selectedDate}&end_date=${selectedDate}&timezone=${encodeURIComponent(c.tz)}`);
+        if(!r.ok)throw new Error(r.status);
         const d=await r.json();const h=d.hourly||{};
         const temps=h.temperature_2m||[],precip=h.precipitation||[],clouds=h.cloud_cover||[],wind=h.wind_speed_10m||[];
         if(!temps.length)return;
@@ -360,6 +384,7 @@ async function fetchWeatherOM(){
       done++;
       document.getElementById('fetch-status').textContent=`Open-Meteo: ${done}/${CITIES.length}`;
     }));
+    await new Promise(r=>setTimeout(r,150));
   }
 }
 
@@ -390,29 +415,35 @@ async function fetchWeatherOWM(){
 
 async function fetchMarkets(){
   marketData={};
-  let done=0;
   const slugDate=dateToSlugPart(selectedDate);
   
-  for(const c of CITIES){
+  // Batch through proxy to avoid CORS
+  for(let i=0;i<CITIES.length;i+=10){
+    const batch=CITIES.slice(i,i+10);
+    const slugs=batch.map(c=>`highest-temperature-in-${c.slug}-on-${slugDate}`).join(',');
     try{
-      const slug=`highest-temperature-in-${c.slug}-on-${slugDate}`;
-      const r=await fetch(`https://gamma-api.polymarket.com/events/slug/${slug}`);
-      if(r.status!==200){done++;continue;}
-      const ev=await r.json();
-      const mkts=[];
-      for(const m of(ev.markets||[])){
-        try{
-          const pr=JSON.parse(m.outcomePrices||'[]');
-          const p0=parseFloat(pr[0]);
-          const title=m.groupItemTitle||'';
-          mkts.push({title,price:Math.round(p0*1000)/10,raw:p0});
-        }catch(e){}
-      }
-      mkts.sort((a,b)=>b.price-a.price);
-      if(mkts.length)marketData[c.n]={markets:mkts,vol:ev.volume||0,hasMarket:true};
-    }catch(e){}
-    done++;
-    document.getElementById('fetch-status').textContent=`Markets: ${done}/${CITIES.length}`;
+      const r=await fetch(`${PROXY_BASE}/markets-batch?slugs=${encodeURIComponent(slugs)}`);
+      if(!r.ok)continue;
+      const results=await r.json();
+      
+      batch.forEach(c=>{
+        const slug=`highest-temperature-in-${c.slug}-on-${slugDate}`;
+        const ev=results[slug];
+        if(!ev)return;
+        const mkts=[];
+        for(const m of(ev.markets||[])){
+          try{
+            const pr=JSON.parse(m.outcomePrices||'[]');
+            const p0=parseFloat(pr[0]);
+            const title=m.groupItemTitle||'';
+            mkts.push({title,price:Math.round(p0*1000)/10,raw:p0});
+          }catch(e){}
+        }
+        mkts.sort((a,b)=>b.price-a.price);
+        if(mkts.length)marketData[c.n]={markets:mkts,vol:ev.volume||0,hasMarket:true};
+      });
+    }catch(e){console.error('Batch market fetch error:',e);}
+    document.getElementById('fetch-status').textContent=`Markets: ${Math.min(i+10,CITIES.length)}/${CITIES.length}`;
   }
 }
 
@@ -630,16 +661,16 @@ function renderScanner(el){
       html+=`</div>`;
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px">
         <span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='SKIP'?'skip':'lotto'}">${e.verdict}</span>
-        ${e.cheapTemps.length?`<span style="font-size:8px;color:var(--green)">${e.cheapTemps.length} cheap near forecast</span>`:''}
+        ${e.cheapTemps.length?`<span style="font-size:11px;color:var(--green)">${e.cheapTemps.length} cheap near forecast</span>`:''}
       </div>`;
     } else {
-      html+=`<div style="font-size:9px;color:var(--t3);margin-top:2px">No market yet</div>`;
+      html+=`<div style="font-size:12px;color:var(--t3);margin-top:2px">No market yet</div>`;
     }
     
     html+=`</div>`;
   });
 
-  if(!filtered.length)html+='<div style="font-size:10px;color:var(--t2);padding:10px">No cities match filter</div>';
+  if(!filtered.length)html+='<div style="font-size:13px;color:var(--t2);padding:10px">No cities match filter</div>';
   el.innerHTML=html;
 }
 
@@ -654,7 +685,7 @@ function renderRecs(el){
   if(!edges.length){
     html+=`<div style="padding:15px;text-align:center;color:var(--t2)">
       <div style="font-size:14px;margin-bottom:5px">No strong edges detected</div>
-      <div style="font-size:10px">Try checking other dates or wait for markets to open</div>
+      <div style="font-size:13px">Try checking other dates or wait for markets to open</div>
     </div>`;
     el.innerHTML=html;return;
   }
@@ -666,14 +697,14 @@ function renderRecs(el){
         <div><span class="cc-name" style="font-size:14px">${c.n}</span><span class="tag tag-buy" style="margin-left:8px">${e.verdict}</span></div>
         <span style="font-size:22px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans)">${e.displayTemp}${u}</span>
       </div>
-      <div style="font-size:9px;color:var(--t2);margin-bottom:6px">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:6px">
         Forecast: ${e.sources.map(s=>`${s.name} ${Math.round(s.val*10)/10}°C`).join(' · ')}
         ${e.offset?` · Airport ${e.offset>0?'+':''}${e.offset}°C`:''}
         ${e.rainAdj?` · Rain adj ${e.rainAdj}°C`:''}
       </div>`;
     
     if(e.cheapTemps.length){
-      html+=`<div style="font-size:9px;color:var(--green);font-weight:600;margin-bottom:4px">TARGETS:</div>
+      html+=`<div style="font-size:12px;color:var(--green);font-weight:600;margin-bottom:4px">TARGETS:</div>
         <div class="mkt-row">`;
       e.cheapTemps.forEach(t=>{
         const payout=t.price>0?Math.round((1/t.price*100)*100)/100:0;
@@ -694,14 +725,14 @@ function renderBets(el){
   active.forEach(p=>{if(!grouped[p.city])grouped[p.city]=[];grouped[p.city].push(p);});
   
   let html=`<div class="section-label">ACTIVE POSITIONS (${active.length})</div>`;
-  if(!active.length)html+='<div style="font-size:10px;color:var(--t2);padding:8px">No active positions</div>';
+  if(!active.length)html+='<div style="font-size:13px;color:var(--t2);padding:8px">No active positions</div>';
   
   Object.keys(grouped).forEach(city=>{
     const bets=grouped[city];
     const totalCost=bets.reduce((a,b)=>a+b.cost,0);
     html+=`<div class="city-card has-bet">
       <div class="cc-head"><span class="cc-name">${city}</span><span style="font-size:11px;color:var(--green);font-weight:600">$${totalCost.toFixed(2)}</span></div>
-      <div style="font-size:10px;color:var(--t1);margin:3px 0">${bets.map(b=>b.temp).join(', ')}</div>
+      <div style="font-size:13px;color:var(--t1);margin:3px 0">${bets.map(b=>b.temp).join(', ')}</div>
       <div class="cc-meta"><span>${bets[0].date||''}</span><span>${bets.length} positions</span></div>
     </div>`;
   });
@@ -727,23 +758,23 @@ function renderPerf(el){
   
   let html=`<div style="padding:10px;background:${totalPnl>=0?'var(--greend)':'var(--redd)'};border:1px solid ${totalPnl>=0?'rgba(0,217,126,.2)':'rgba(255,71,87,.2)'};border-radius:6px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-size:9px;color:${pnlColor};letter-spacing:1px">NET P&L</div>
+      <div><div style="font-size:12px;color:${pnlColor};letter-spacing:1px">NET P&L</div>
       <div style="font-size:28px;font-weight:800;color:${pnlColor};font-family:var(--sans)">${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toFixed(2)}</div></div>
-      <div style="text-align:right"><div style="font-size:10px;color:var(--t2)">$${totalInv.toFixed(2)} invested</div>
+      <div style="text-align:right"><div style="font-size:13px;color:var(--t2)">$${totalInv.toFixed(2)} invested</div>
       <div style="font-size:16px;font-weight:700;color:var(--bluel);font-family:var(--sans)">${roi>=0?'+':''}${roi.toFixed(0)}% ROI</div>
-      <div style="font-size:9px;color:var(--t2)">${wins.length}W / ${resolved.length-wins.length}L</div></div>
+      <div style="font-size:12px;color:var(--t2)">${wins.length}W / ${resolved.length-wins.length}L</div></div>
     </div></div>`;
   
   html+='<div class="section-label">TRADE HISTORY</div>';
   [...resolved].reverse().forEach(t=>{
     const w=t.pnl>0;
     html+=`<div class="perf-row">
-      <div><div style="font-size:10px;font-weight:600;color:${w?'var(--green)':'var(--red)'}">${t.city} ${t.temp}</div>
-      <div style="font-size:8px;color:var(--t3)">${t.date} · $${t.cost.toFixed(2)} → $${t.payout.toFixed(2)}</div></div>
+      <div><div style="font-size:13px;font-weight:600;color:${w?'var(--green)':'var(--red)'}">${t.city} ${t.temp}</div>
+      <div style="font-size:11px;color:var(--t3)">${t.date} · $${t.cost.toFixed(2)} → $${t.payout.toFixed(2)}</div></div>
       <div style="font-size:13px;font-weight:700;color:${w?'var(--green)':'var(--red)'};font-family:var(--sans)">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)}</div>
     </div>`;
   });
-  if(!resolved.length)html+='<div style="font-size:10px;color:var(--t2);padding:8px">No resolved trades yet</div>';
+  if(!resolved.length)html+='<div style="font-size:13px;color:var(--t2);padding:8px">No resolved trades yet</div>';
   el.innerHTML=html;
 }
 
@@ -755,12 +786,12 @@ function selectCity(name){
   const u=c.u==='F'?'°F':'°C';
   
   let html=`<div style="font-size:15px;font-weight:700;color:#fff;font-family:var(--sans)">${name}</div>
-    <div style="font-size:9px;color:var(--t2);margin:2px 0">${c.icao} · ${c.r} · ${formatDateShort(selectedDate)}</div>`;
+    <div style="font-size:12px;color:var(--t2);margin:2px 0">${c.icao} · ${c.r} · ${formatDateShort(selectedDate)}</div>`;
   
   if(e){
     html+=`<div style="font-size:24px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans);margin:4px 0">${e.displayTemp}${u}</div>`;
     // Sources
-    html+=`<div style="font-size:9px;color:var(--t2)">`;
+    html+=`<div style="font-size:12px;color:var(--t2)">`;
     e.sources.forEach(s=>{html+=`${s.name}: ${Math.round(s.val*10)/10}°C · `;});
     html+=`Rain: ${d.totalRain}mm`;
     if(e.offset)html+=` · ✈${e.offset>0?'+':''}${e.offset}°C`;
@@ -770,13 +801,13 @@ function selectCity(name){
     if(e.hasMarket){
       html+=`<div style="margin-top:4px"><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='SKIP'?'skip':'lotto'}">${e.verdict}</span></div>`;
       if(e.cheapTemps.length){
-        html+=`<div style="font-size:8px;color:var(--green);margin-top:4px">Cheap near forecast:</div>`;
+        html+=`<div style="font-size:11px;color:var(--green);margin-top:4px">Cheap near forecast:</div>`;
         e.cheapTemps.forEach(t=>{
-          html+=`<div style="font-size:9px;color:var(--t1)">${t.title} @${t.price}%</div>`;
+          html+=`<div style="font-size:12px;color:var(--t1)">${t.title} @${t.price}%</div>`;
         });
       }
     } else {
-      html+=`<div style="font-size:9px;color:var(--t3);margin-top:4px">No market for this date</div>`;
+      html+=`<div style="font-size:12px;color:var(--t3);margin-top:4px">No market for this date</div>`;
     }
   }
   
@@ -785,9 +816,9 @@ function selectCity(name){
   if(myPos.length){
     const active=myPos.filter(p=>p.status==='active');
     if(active.length){
-      html+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bdr);font-size:8px;color:var(--green);letter-spacing:1px">YOUR POSITIONS</div>`;
+      html+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bdr);font-size:11px;color:var(--green);letter-spacing:1px">YOUR POSITIONS</div>`;
       active.forEach(p=>{
-        html+=`<div style="font-size:9px;display:flex;justify-content:space-between"><span>${p.temp}</span><span style="color:var(--t2)">$${p.cost.toFixed(2)}</span></div>`;
+        html+=`<div style="font-size:12px;display:flex;justify-content:space-between"><span>${p.temp}</span><span style="color:var(--t2)">$${p.cost.toFixed(2)}</span></div>`;
       });
     }
   }
@@ -856,8 +887,13 @@ setInterval(()=>{
 },1000);
 
 async function init(){
-  selectedDate=getDateStr(1); // tomorrow by default
+  selectedDate=getDateStr(1);
   buildDateNav();
+  
+  // Initialize Windy animated map
+  document.getElementById('fetch-status').textContent='Initializing Windy...';
+  await initWindy();
+  addCityMarkers();
   
   // Fetch positions once (not date-dependent)
   fetchPositions().then(()=>{renderStats();renderPanel();});
