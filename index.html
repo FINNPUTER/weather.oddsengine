@@ -991,15 +991,17 @@ function selectCity(name){
     }
   }
   
-  // Show user's positions for this city
-  const myPos=positionsData.filter(p=>p.city.toLowerCase().includes(name.toLowerCase()));
-  if(myPos.length){
-    const active=myPos.filter(p=>p.status==='active');
-    if(active.length){
-      html+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bdr);font-size:11px;color:var(--green);letter-spacing:1px">YOUR POSITIONS</div>`;
-      active.forEach(p=>{
-        html+=`<div style="font-size:12px;display:flex;justify-content:space-between"><span>${p.temp}</span><span style="color:var(--t2)">$${p.cost.toFixed(2)}</span></div>`;
-      });
+  // Show user's positions for this city — private only
+  if(IS_PRIVATE){
+    const myPos=positionsData.filter(p=>p.city.toLowerCase().includes(name.toLowerCase()));
+    if(myPos.length){
+      const active=myPos.filter(p=>p.status==='active');
+      if(active.length){
+        html+=`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bdr);font-size:11px;color:var(--green);letter-spacing:1px">YOUR POSITIONS</div>`;
+        active.forEach(p=>{
+          html+=`<div style="font-size:12px;display:flex;justify-content:space-between"><span>${p.temp}</span><span style="color:var(--t2)">$${p.cost.toFixed(2)}</span></div>`;
+        });
+      }
     }
   }
   
