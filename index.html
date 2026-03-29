@@ -244,28 +244,72 @@ let dateButtons=[];
 let map=null, L=null, windyStore=null;
 
 // ═══════════════════════════════════════════
-// WINDY MAP INIT
+// MAP INIT — Windy with Leaflet fallback
 // ═══════════════════════════════════════════
-const windyOptions={
-  key:WINDY_KEY,
-  lat:25,lon:20,zoom:3,
-  overlay:'wind',
-  verbose:false
-};
+let windyLoaded=false;
 
-function initWindy(){
+function initLeafletFallback(){
+  // Load Leaflet CSS dynamically
+  const link=document.createElement('link');
+  link.rel='stylesheet';link.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.appendChild(link);
+  
+  const script=document.createElement('script');
+  script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  script.onload=()=>{
+    L=window.L;
+    map=L.map('windy',{zoomControl:true,attributionControl:false,minZoom:2,maxZoom:10}).setView([25,20],2.5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
+    addCityMarkers();
+    document.getElementById('fetch-status').textContent='Map ready (Leaflet fallback)';
+  };
+  document.head.appendChild(script);
+}
+
+function initMap(){
   return new Promise(resolve=>{
-    windyInit(windyOptions, api=>{
-      const{map:m, store, overlays, picker, utils, broadcast}=api;
-      map=m;
-      L=window.L;
-      windyStore=store;
+    // Try Windy first with 8s timeout
+    const timeout=setTimeout(()=>{
+      console.warn('Windy timeout — falling back to Leaflet');
+      document.getElementById('fetch-status').textContent='Windy timeout, loading Leaflet...';
+      initLeafletFallback();
+      resolve();
+    }, 8000);
+    
+    try{
+      if(typeof windyInit==='undefined'){
+        clearTimeout(timeout);
+        console.warn('windyInit not found — falling back to Leaflet');
+        initLeafletFallback();
+        resolve();
+        return;
+      }
       
-      // Set dark mode
-      store.set('darkMode',true);
+      const windyOptions={
+        key:WINDY_KEY,
+        lat:25,lon:20,zoom:3,
+        overlay:'wind',
+        verbose:false
+      };
       
-      resolve(api);
-    });
+      windyInit(windyOptions, api=>{
+        clearTimeout(timeout);
+        const{map:m, store}=api;
+        map=m;
+        L=window.L;
+        windyStore=store;
+        windyLoaded=true;
+        store.set('darkMode',true);
+        addCityMarkers();
+        document.getElementById('fetch-status').textContent='Windy loaded';
+        resolve(api);
+      });
+    }catch(e){
+      clearTimeout(timeout);
+      console.error('Windy error:',e);
+      initLeafletFallback();
+      resolve();
+    }
   });
 }
 
@@ -890,10 +934,9 @@ async function init(){
   selectedDate=getDateStr(1);
   buildDateNav();
   
-  // Initialize Windy animated map
-  document.getElementById('fetch-status').textContent='Initializing Windy...';
-  await initWindy();
-  addCityMarkers();
+  // Initialize map (Windy or Leaflet fallback)
+  document.getElementById('fetch-status').textContent='Initializing map...';
+  await initMap();
   
   // Fetch positions once (not date-dependent)
   fetchPositions().then(()=>{renderStats();renderPanel();});
