@@ -370,12 +370,13 @@ function dateToSlugPart(ds){
 function buildDateNav(){
   const nav=document.getElementById('date-nav');
   let html='<button class="date-arrow" onclick="shiftDates(-3)">◀</button>';
-  // Show 7 days starting from tomorrow
-  for(let i=1;i<=7;i++){
+  // Show 8 days starting from today
+  for(let i=0;i<=7;i++){
     const ds=getDateStr(i);
     const label=formatDateShort(ds);
     const isSelected=ds===selectedDate;
-    html+=`<button class="date-btn ${isSelected?'on':''}" data-date="${ds}" onclick="selectDate('${ds}')">${label}</button>`;
+    const todayLabel=i===0?'TODAY':'';
+    html+=`<button class="date-btn ${isSelected?'on':''}" data-date="${ds}" onclick="selectDate('${ds}')">${todayLabel||label}</button>`;
   }
   html+='<button class="date-arrow" onclick="shiftDates(3)">▶</button>';
   nav.innerHTML=html;
@@ -507,8 +508,20 @@ async function fetchPositions(){
       const avgPrice=parseFloat(p.avgPrice||p.price||0);
       const cost=size*avgPrice;
       const curPrice=parseFloat(p.curPrice||p.currentPrice||avgPrice);
-      const resolved=p.closed||p.resolved||(curPrice===0||curPrice===1);
-      const won=curPrice>=0.99;
+      
+      // Better resolved detection: check date + curPrice tolerance
+      let resolved=p.closed||p.resolved||(curPrice<0.05)||(curPrice>0.95);
+      // Also check if market date is in the past
+      if(date){
+        try{
+          const year=new Date().getFullYear();
+          const marketDate=new Date(`${date} ${year}`);
+          const today=new Date();today.setHours(0,0,0,0);
+          if(marketDate<today)resolved=true;
+        }catch(e){}
+      }
+      
+      const won=curPrice>0.95;
       const payout=won?size:0;
       return{city,temp,date,cost,payout,pnl:resolved?(payout-cost):0,size,avgPrice,curPrice,status:resolved?'resolved':'active',title};
     });
@@ -931,7 +944,7 @@ setInterval(()=>{
 },1000);
 
 async function init(){
-  selectedDate=getDateStr(1);
+  selectedDate=getDateStr(0); // today
   buildDateNav();
   
   // Initialize map (Windy or Leaflet fallback)
