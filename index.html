@@ -66,6 +66,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:14px
 .tag-buy{background:rgba(0,217,126,.15);color:var(--green);font-weight:700;letter-spacing:.5px}
 .tag-skip{background:var(--bg2);color:var(--t3)}
 .tag-lotto{background:rgba(245,166,35,.1);color:var(--amber)}
+.tag-verify{background:rgba(245,166,35,.15);color:var(--amber);font-weight:700;letter-spacing:.5px;border:1px dashed var(--amber)}
 
 /* Source comparison */
 .src-row{display:flex;gap:4px;font-size:12px;margin:3px 0;align-items:center}
@@ -549,13 +550,19 @@ function getEdge(cityName){
   const c=CITIES.find(x=>x.n===cityName);
   if(!w)return null;
   
+  // Forecast horizon: how many days ahead?
+  const today=getDateStr(0);
+  const daysAhead=Math.round((new Date(selectedDate+'T12:00:00')-new Date(today+'T12:00:00'))/(86400000));
+  
   // Our adjusted forecast (average of sources if both available)
   let ourForecast=w.finalPeak;
   let sources=[{name:'OM',val:w.finalPeak,raw:w.rawPeak}];
+  let sourceSpread=0;
   if(o){
     const owmAdj=Math.round((o.adjPeak+(w.rainAdj||0))*10)/10;
     sources.push({name:'OWM',val:owmAdj,raw:o.peak});
     ourForecast=Math.round(((w.finalPeak+owmAdj)/2)*10)/10;
+    sourceSpread=Math.abs(w.finalPeak-owmAdj);
   }
   
   // Convert to display unit
@@ -564,17 +571,23 @@ function getEdge(cityName){
   
   let verdict='SKIP', edgeLevel=0, cheapTemps=[], edgeColor='var(--t3)';
   
+  // Confidence penalty
+  let confPenalty=0;
+  let confWarning='';
+  if(daysAhead>=2){confPenalty=2;confWarning='⚠ 2+ days out — verify with Wunderground';}
+  else if(daysAhead>=1){confPenalty=1;confWarning='⚠ Tomorrow — check closer to peak';}
+  
+  // Source disagreement penalty
+  if(sourceSpread>4){confPenalty=Math.max(confPenalty,2);confWarning='⚠ Sources disagree by '+Math.round(sourceSpread)+'° — low confidence';}
+  
   if(mk&&mk.hasMarket){
-    // Find market consensus (highest-priced temp)
     const consensus=mk.markets[0];
-    // Find cheap temps near our forecast
     const nearTemps=mk.markets.filter(m=>{
-      // Parse temp from title like "4°C" or "72°F"
       const match=m.title.match(/([\d]+)/);
       if(!match)return false;
       const mTemp=parseInt(match[1]);
       const diff=Math.abs(mTemp-displayTemp);
-      return diff<=3&&m.price<15; // within 3 degrees and cheap (<15%)
+      return diff<=3&&m.price<15;
     });
     
     cheapTemps=nearTemps;
@@ -598,14 +611,23 @@ function getEdge(cityName){
     }
   }
   
-  // Rain edge: heavy rain suppresses peak but market might not price it in
+  // Rain edge
   if(w.peakRain>3&&mk&&mk.hasMarket){
     verdict='RAIN EDGE';edgeLevel=2;edgeColor='var(--violet)';
   }
   
+  // Apply confidence penalty — downgrade verdict
+  if(confPenalty>0&&edgeLevel>0){
+    edgeLevel=Math.max(0,edgeLevel-confPenalty);
+    if(edgeLevel<=1&&verdict!=='SKIP'){
+      verdict='VERIFY';edgeColor='var(--amber)';
+    }
+  }
+  if(daysAhead>0)console.log(`[CONF] ${cityName}: days=${daysAhead} penalty=${confPenalty} spread=${Math.round(sourceSpread)}° verdict=${verdict}`);
+  
   return{ourForecast,displayTemp,unit,sources,verdict,edgeLevel,edgeColor,cheapTemps,
     rain:w.totalRain,peakRain:w.peakRain,rainAdj:w.rainAdj,offset:w.offset,
-    hasMarket:!!(mk&&mk.hasMarket)};
+    hasMarket:!!(mk&&mk.hasMarket),daysAhead,confWarning,sourceSpread};
 }
 
 // ═══════════════════════════════════════════
@@ -830,9 +852,10 @@ function renderScanner(el){
       });
       html+=`</div>`;
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px">
-        <span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='SKIP'?'skip':'lotto'}">${e.verdict}</span>
+        <span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':'lotto'}">${e.verdict}</span>
         ${e.cheapTemps.length?`<span style="font-size:11px;color:var(--green)">${e.cheapTemps.length} cheap near forecast</span>`:''}
       </div>`;
+      if(e.confWarning){html+=`<div style="font-size:10px;color:var(--amber);margin-top:3px">${e.confWarning}</div>`}
     } else {
       html+=`<div style="font-size:12px;color:var(--t3);margin-top:2px">No market yet</div>`;
     }
@@ -872,7 +895,7 @@ function renderRecs(el){
     const u=c.u==='F'?'°F':'°C';
     html+=`<div class="city-card edge-strong" style="padding:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div><span class="cc-name" style="font-size:14px">${c.n}</span><span class="tag tag-buy" style="margin-left:8px">${e.verdict}</span></div>
+        <div><span class="cc-name" style="font-size:14px">${c.n}</span><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':'edge'}" style="margin-left:8px">${e.verdict}</span></div>
         <span style="font-size:22px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans)">${e.displayTemp}${u}</span>
       </div>
       <div style="font-size:12px;color:var(--t2);margin-bottom:6px">
@@ -979,7 +1002,8 @@ function selectCity(name){
     html+=`</div>`;
     
     if(e.hasMarket){
-      html+=`<div style="margin-top:4px"><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='SKIP'?'skip':'lotto'}">${e.verdict}</span></div>`;
+      html+=`<div style="margin-top:4px"><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':'lotto'}">${e.verdict}</span></div>`;
+      if(e.confWarning){html+=`<div style="font-size:10px;color:var(--amber);margin-top:3px">${e.confWarning}</div>`}
       if(e.cheapTemps.length){
         html+=`<div style="font-size:11px;color:var(--green);margin-top:4px">Cheap near forecast:</div>`;
         e.cheapTemps.forEach(t=>{
@@ -991,9 +1015,18 @@ function selectCity(name){
     }
   }
   
-  // Show user's positions for this city — private only
+  // Show user's positions for this city — private only, date-matched
   if(IS_PRIVATE){
-    const myPos=positionsData.filter(p=>p.city.toLowerCase().includes(name.toLowerCase()));
+    // Convert selectedDate "2026-03-29" to "March 29" format
+    const sp=selectedDate.split('-');
+    const selMonth=Object.values(MONTHS)[parseInt(sp[1])-1];
+    const selDateStr=selMonth.charAt(0).toUpperCase()+selMonth.slice(1)+' '+parseInt(sp[2]);
+    
+    const myPos=positionsData.filter(p=>{
+      const cityMatch=p.city.toLowerCase().includes(name.toLowerCase());
+      const dateMatch=p.date&&p.date.toLowerCase()===selDateStr.toLowerCase();
+      return cityMatch&&dateMatch;
+    });
     if(myPos.length){
       const active=myPos.filter(p=>p.status==='active');
       if(active.length){
