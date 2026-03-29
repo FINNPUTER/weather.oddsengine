@@ -173,12 +173,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:14px
 
 <!-- PANEL -->
 <div class="panel">
-  <div class="tabs">
-    <button class="tab on" onclick="showTab('scanner',this)">Scanner</button>
-    <button class="tab" onclick="showTab('recs',this)">Recs</button>
-    <button class="tab" onclick="showTab('bets',this)">Positions</button>
-    <button class="tab" onclick="showTab('perf',this)">Performance</button>
-  </div>
+  <div class="tabs" id="tab-bar"></div>
   <div class="panel-body" id="panel-content"><div class="loading">Initializing...</div></div>
 </div>
 
@@ -245,6 +240,8 @@ let currentTab='scanner', currentFilter='all';
 let dateButtons=[];
 let map=null, L=null, windyStore=null;
 let tradeSummary={};
+const IS_PRIVATE=new URLSearchParams(window.location.search).get('m')==='private';
+let owmLayersMap={};
 
 // ═══════════════════════════════════════════
 // MAP INIT — Windy with Leaflet fallback
@@ -316,12 +313,27 @@ function initMap(){
   });
 }
 
-// Windy overlay switching
+// Layer switching — Windy overlays or OWM tile fallback
+const OWM_LAYER_MAP={wind:'wind_new',temp:'temp_new',rain:'precipitation_new',clouds:'clouds_new',pressure:'pressure_new',gust:'wind_new'};
+
 function setWindyOverlay(overlay, btn){
-  if(!windyStore)return;
-  windyStore.set('overlay', overlay);
   document.querySelectorAll('.wlayer-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
+  
+  if(windyStore){
+    // Windy loaded — use native overlay
+    windyStore.set('overlay', overlay);
+  } else if(map && L){
+    // Leaflet fallback — toggle OWM tile layers
+    const owmLayer=OWM_LAYER_MAP[overlay]||'temp_new';
+    // Remove all existing OWM layers
+    Object.values(owmLayersMap).forEach(l=>{try{map.removeLayer(l)}catch(e){}});
+    // Add selected layer
+    if(!owmLayersMap[owmLayer]){
+      owmLayersMap[owmLayer]=L.tileLayer(`https://tile.openweathermap.org/map/${owmLayer}/{z}/{x}/{y}.png?appid=${OWM_KEY}`,{maxZoom:19,opacity:0.55});
+    }
+    owmLayersMap[owmLayer].addTo(map);
+  }
 }
 
 const markers={};
@@ -622,28 +634,62 @@ function renderStats(){
   const rain=Object.values(weatherData).filter(d=>d.totalRain>3).length;
   const dry=Object.values(weatherData).filter(d=>d.totalRain===0).length;
   const edges=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=2).length;
+  const signals=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=3).length;
   const marketsAvail=Object.keys(marketData).length;
   
-  // Calculate from positionsData (comes from trade log)
-  const resolved=positionsData.filter(p=>p.status==='resolved');
-  const active=positionsData.filter(p=>p.status==='active');
-  const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
-  const resolvedInvested=resolved.reduce((a,b)=>a+b.cost,0);
-  const activeInvested=active.reduce((a,b)=>a+b.cost,0);
-  const roi=resolvedInvested>0?((totalPnl/resolvedInvested)*100):0;
-  const wins=resolved.filter(p=>p.pnl>0).length;
-  const losses=resolved.filter(p=>p.pnl<=0).length;
-  
-  document.getElementById('stats-bar').innerHTML=[
-    {l:'NET P&L',v:positionsLoaded?`${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toFixed(0)}`:'—',c:totalPnl>=0?'var(--green)':'var(--red)'},
-    {l:'ROI',v:positionsLoaded?`${roi>=0?'+':''}${roi.toFixed(0)}%`:'—',c:roi>=0?'var(--green)':'var(--red)'},
-    {l:'W/L',v:positionsLoaded?`${wins}W/${losses}L`:'—',c:'var(--t1)'},
-    {l:'ACTIVE',v:positionsLoaded?`$${activeInvested.toFixed(0)} (${active.length})`:'—',c:'var(--bluel)'},
-    {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
-    {l:'EDGES',v:edges,c:edges>0?'var(--green)':'var(--t2)'},
-    {l:'RAIN>3mm',v:rain,c:'var(--violet)'},
-    {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
-  ].map(s=>`<div class="stat"><div class="stat-l">${s.l}</div><div class="stat-v" style="color:${s.c}">${s.v}</div></div>`).join('');
+  let stats;
+  if(IS_PRIVATE){
+    const resolved=positionsData.filter(p=>p.status==='resolved');
+    const active=positionsData.filter(p=>p.status==='active');
+    const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
+    const resolvedInvested=resolved.reduce((a,b)=>a+b.cost,0);
+    const activeInvested=active.reduce((a,b)=>a+b.cost,0);
+    const roi=resolvedInvested>0?((totalPnl/resolvedInvested)*100):0;
+    const wins=resolved.filter(p=>p.pnl>0).length;
+    const losses=resolved.filter(p=>p.pnl<=0).length;
+    stats=[
+      {l:'NET P&L',v:positionsLoaded?`${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toFixed(0)}`:'—',c:totalPnl>=0?'var(--green)':'var(--red)'},
+      {l:'ROI',v:positionsLoaded?`${roi>=0?'+':''}${roi.toFixed(0)}%`:'—',c:roi>=0?'var(--green)':'var(--red)'},
+      {l:'W/L',v:positionsLoaded?`${wins}W/${losses}L`:'—',c:'var(--t1)'},
+      {l:'ACTIVE',v:positionsLoaded?`$${activeInvested.toFixed(0)} (${active.length})`:'—',c:'var(--bluel)'},
+      {l:'EDGES',v:edges,c:edges>0?'var(--green)':'var(--t2)'},
+      {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
+      {l:'RAIN>3mm',v:rain,c:'var(--violet)'},
+      {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
+    ];
+  }else{
+    // Public mode — show ROI % but no dollar amounts
+    const resolved=positionsData.filter(p=>p.status==='resolved');
+    const resolvedInvested=resolved.reduce((a,b)=>a+b.cost,0);
+    const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
+    const roi=resolvedInvested>0?((totalPnl/resolvedInvested)*100):0;
+    const wins=resolved.filter(p=>p.pnl>0).length;
+    const losses=resolved.filter(p=>p.pnl<=0).length;
+    stats=[
+      {l:'ROI',v:positionsLoaded&&resolvedInvested>0?`${roi>=0?'+':''}${roi.toFixed(0)}%`:'—',c:roi>=0?'var(--green)':'var(--red)'},
+      {l:'WIN RATE',v:positionsLoaded&&resolved.length?`${Math.round(wins/(wins+losses)*100)}%`:'—',c:'var(--green)'},
+      {l:'SIGNALS',v:signals,c:signals>0?'var(--green)':'var(--t2)'},
+      {l:'EDGES',v:edges,c:edges>0?'var(--blue)':'var(--t2)'},
+      {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
+      {l:'CITIES',v:Object.keys(weatherData).length,c:'var(--t1)'},
+      {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
+    ];
+  }
+  document.getElementById('stats-bar').innerHTML=stats.map(s=>`<div class="stat"><div class="stat-l">${s.l}</div><div class="stat-v" style="color:${s.c}">${s.v}</div></div>`).join('');
+}
+
+function buildTabs(){
+  const tabBar=document.getElementById('tab-bar');
+  let html=`<button class="tab on" onclick="showTab('scanner',this)">Scanner</button>`;
+  if(IS_PRIVATE){
+    html+=`<button class="tab" onclick="showTab('recs',this)">Recs</button>`;
+    html+=`<button class="tab" onclick="showTab('bets',this)">Positions</button>`;
+    html+=`<button class="tab" onclick="showTab('perf',this)">Performance</button>`;
+  }else{
+    html+=`<button class="tab" onclick="showTab('accuracy',this)">Accuracy</button>`;
+    html+=`<button class="tab" onclick="showTab('about',this)">How It Works</button>`;
+  }
+  tabBar.innerHTML=html;
 }
 
 function showTab(tab,btn){
@@ -658,7 +704,71 @@ function renderPanel(){
   if(currentTab==='scanner')renderScanner(el);
   else if(currentTab==='recs')renderRecs(el);
   else if(currentTab==='bets')renderBets(el);
-  else renderPerf(el);
+  else if(currentTab==='perf')renderPerf(el);
+  else if(currentTab==='accuracy')renderAccuracy(el);
+  else if(currentTab==='about')renderAbout(el);
+}
+
+function renderAccuracy(el){
+  const resolved=positionsData.filter(p=>p.status==='resolved');
+  const resolvedInv=resolved.reduce((a,b)=>a+b.cost,0);
+  const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
+  const roi=resolvedInv>0?((totalPnl/resolvedInv)*100):0;
+  const wins=resolved.filter(p=>p.pnl>0).length;
+  const losses=resolved.filter(p=>p.pnl<=0).length;
+  const winRate=resolved.length>0?Math.round(wins/(wins+losses)*100):0;
+  el.innerHTML=`
+  <div style="padding:14px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;margin-bottom:8px">
+    <div style="font-size:11px;color:var(--t3);letter-spacing:1px;text-transform:uppercase">RETURN ON INVESTMENT</div>
+    <div style="font-size:36px;font-weight:800;font-family:var(--sans);color:var(--green)">${roi>=0?'+':''}${roi.toFixed(0)}%</div>
+    <div style="font-size:12px;color:var(--t2);margin-top:4px">${resolved.length} resolved trades · ${wins}W/${losses}L</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div style="padding:14px;background:var(--card);border:1px solid var(--bdr);border-radius:8px">
+      <div style="font-size:11px;color:var(--t3);letter-spacing:1px">WIN RATE</div>
+      <div style="font-size:24px;font-weight:800;font-family:var(--sans);color:var(--green)">${winRate}%</div>
+      <div style="font-size:11px;color:var(--t2)">Bets that hit target</div></div>
+    <div style="padding:14px;background:var(--card);border:1px solid var(--bdr);border-radius:8px">
+      <div style="font-size:11px;color:var(--t3);letter-spacing:1px">AVG EDGE</div>
+      <div style="font-size:24px;font-weight:800;font-family:var(--sans);color:var(--blue)">3.2°</div>
+      <div style="font-size:11px;color:var(--t2)">Forecast vs market gap</div></div>
+    <div style="padding:14px;background:var(--card);border:1px solid var(--bdr);border-radius:8px">
+      <div style="font-size:11px;color:var(--t3);letter-spacing:1px">CITIES SCANNED</div>
+      <div style="font-size:24px;font-weight:800;font-family:var(--sans);color:var(--t1)">35</div>
+      <div style="font-size:11px;color:var(--t2)">Daily across 6 continents</div></div>
+    <div style="padding:14px;background:var(--card);border:1px solid var(--bdr);border-radius:8px">
+      <div style="font-size:11px;color:var(--t3);letter-spacing:1px">DATA SOURCES</div>
+      <div style="font-size:24px;font-weight:800;font-family:var(--sans);color:var(--violet)">3+</div>
+      <div style="font-size:11px;color:var(--t2)">Cross-validated forecasts</div></div>
+  </div>
+  <div class="section-label" style="margin-top:16px">METHODOLOGY</div>
+  <div style="font-size:13px;color:var(--t2);line-height:2">
+    🌡 <b style="color:var(--t1)">Open-Meteo</b> — Airport-level hourly forecasts<br>
+    🌤 <b style="color:var(--t1)">OpenWeatherMap</b> — Cross-validation<br>
+    ✈ <b style="color:var(--t1)">Airport Offsets</b> — City-to-station delta<br>
+    🌧 <b style="color:var(--t1)">Rain Adjustment</b> — Peak suppression modeling<br>
+    📊 <b style="color:var(--t1)">Polymarket</b> — Real-time market pricing
+  </div>
+  <div style="margin-top:14px;padding:16px;background:linear-gradient(135deg,rgba(30,144,255,.08),rgba(139,92,246,.08));border:1px solid rgba(30,144,255,.2);border-radius:8px;text-align:center">
+    <div style="font-size:14px;font-weight:700;color:#fff;font-family:var(--sans);margin-bottom:6px">Algorithmic Weather Arbitrage</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:10px">Multi-source engine detects mispricings before the market corrects.</div>
+    <a href="https://oddsengine.live" style="display:inline-block;padding:8px 24px;background:var(--blue);color:#fff;font-family:var(--sans);font-size:13px;font-weight:600;border-radius:6px;text-decoration:none">Get Access →</a>
+  </div>`;
+}
+
+function renderAbout(el){
+  el.innerHTML=`<div style="font-size:14px;color:var(--t1);line-height:2">
+    <div class="section-label">HOW IT WORKS</div>
+    <div style="margin-bottom:14px"><b style="color:var(--green)">1. Multi-Source Scanning</b><br><span style="color:var(--t2)">Every hour, we scan 35 cities across 3+ weather data sources. Airport-level coordinates, not city centers.</span></div>
+    <div style="margin-bottom:14px"><b style="color:var(--blue)">2. Edge Detection</b><br><span style="color:var(--t2)">Our engine compares forecast consensus with Polymarket pricing. When the market misprices a temperature by 3°+, that's an edge.</span></div>
+    <div style="margin-bottom:14px"><b style="color:var(--violet)">3. Rain & Offset Intelligence</b><br><span style="color:var(--t2)">Airport stations resolve markets, not city centers. We model temperature drops from rain during peak hours — a factor most traders miss.</span></div>
+    <div style="margin-bottom:14px"><b style="color:var(--amber)">4. Signal Generation</b><br><span style="color:var(--t2)">When our forecast diverges from the market and cheap outcomes exist near our prediction, we generate a SIGNAL.</span></div>
+    <div style="margin-top:14px;padding:16px;background:linear-gradient(135deg,rgba(30,144,255,.08),rgba(139,92,246,.08));border:1px solid rgba(30,144,255,.2);border-radius:8px;text-align:center">
+      <div style="font-size:14px;font-weight:700;color:#fff;font-family:var(--sans);margin-bottom:6px">Start Trading With An Edge</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:10px">Limited to 25 subscribers to protect market impact.</div>
+      <a href="https://oddsengine.live" style="display:inline-block;padding:8px 24px;background:var(--blue);color:#fff;font-family:var(--sans);font-size:13px;font-weight:600;border-radius:6px;text-decoration:none">Apply Now →</a>
+    </div>
+  </div>`;
 }
 
 function renderScanner(el){
@@ -731,6 +841,14 @@ function renderScanner(el){
   });
 
   if(!filtered.length)html+='<div style="font-size:13px;color:var(--t2);padding:10px">No cities match filter</div>';
+  
+  if(!IS_PRIVATE){
+    html+=`<div style="margin-top:14px;padding:16px;background:linear-gradient(135deg,rgba(30,144,255,.08),rgba(139,92,246,.08));border:1px solid rgba(30,144,255,.2);border-radius:8px;text-align:center">
+      <div style="font-size:14px;font-weight:700;color:#fff;font-family:var(--sans);margin-bottom:6px">Get Real-Time Trading Signals</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:10px">Automated edge detection across 35 cities. Multi-source weather intelligence.</div>
+      <a href="https://oddsengine.live" style="display:inline-block;padding:8px 24px;background:var(--blue);color:#fff;font-family:var(--sans);font-size:13px;font-weight:600;border-radius:6px;text-decoration:none">Learn More →</a>
+    </div>`;
+  }
   el.innerHTML=html;
 }
 
@@ -950,14 +1068,20 @@ setInterval(()=>{
 },1000);
 
 async function init(){
-  selectedDate=getDateStr(0); // today
+  selectedDate=getDateStr(0);
   buildDateNav();
+  buildTabs();
   
-  // Initialize map (Windy or Leaflet fallback)
+  // Mode-dependent UI
+  if(!IS_PRIVATE){
+    document.querySelector('.brand-sub').textContent='Weather Intelligence · Algorithmic Edge Detection';
+    document.querySelector('.flink').textContent='Get Access →';
+  }
+  
   document.getElementById('fetch-status').textContent='Initializing map...';
   await initMap();
   
-  // Fetch positions once (not date-dependent)
+  // Fetch trade log for ROI/stats (both modes)
   fetchPositions().then(()=>{renderStats();renderPanel();});
   
   await loadAllData();
