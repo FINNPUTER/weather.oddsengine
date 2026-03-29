@@ -97,9 +97,12 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:14px
 .leaflet-control-zoom a{background:var(--card)!important;color:var(--bluel)!important;border-color:var(--bdr)!important}
 .leaflet-control-attribution{display:none!important}
 #windy{width:100%;height:100%}
-#windy .leaflet-top.leaflet-left{left:160px!important}
+#windy .leaflet-top.leaflet-left{left:170px!important}
 #bottom{display:none!important}
 .progress-bar{display:none!important}
+#embed-zoom{z-index:5000!important}
+#mobile-ovr-select,#logo,#plugins{display:none!important}
+.leaflet-control-container .leaflet-top{z-index:5000!important}
 
 /* Custom markers */
 .city-marker{border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-weight:700;font-size:12px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);cursor:pointer;transition:transform .2s}
@@ -122,7 +125,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:14px
 .fbtn:hover{border-color:var(--bdrh);color:var(--t1)}.fbtn.on{border-color:var(--blue);color:var(--bluel);background:var(--blued)}
 
 /* Weather layer controls */
-.wlayer-panel{position:absolute;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:3px}
+.wlayer-panel{position:absolute;top:10px;left:10px;z-index:10000;display:flex;flex-direction:column;gap:3px;pointer-events:auto}
 .wlayer-btn{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(14,22,32,.92);border:1px solid var(--bdr);border-radius:5px;color:var(--t2);font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;backdrop-filter:blur(8px);min-width:150px}
 .wlayer-btn:hover{border-color:var(--bdrh);color:var(--t1)}
 .wlayer-btn.on{border-color:var(--blue);color:var(--bluel);background:rgba(30,144,255,.08)}
@@ -234,7 +237,6 @@ const CITIES=[
 const OWM_KEY='e75a83526c2d947cd221d23a0e3e6ad2';
 const WINDY_KEY='Z7YcE3KBcjQDfzmRKdCJdxWsZmAgRUkj';
 const PROXY_BASE='https://oddsengine-weather-api-production.up.railway.app';
-const POSITIONS_API=PROXY_BASE+'/positions';
 const MONTHS={1:'january',2:'february',3:'march',4:'april',5:'may',6:'june',7:'july',8:'august',9:'september',10:'october',11:'november',12:'december'};
 
 let selectedDate='';
@@ -242,6 +244,7 @@ let weatherData={}, owmData={}, marketData={}, positionsData=[], positionsLoaded
 let currentTab='scanner', currentFilter='all';
 let dateButtons=[];
 let map=null, L=null, windyStore=null;
+let tradeSummary={};
 
 // ═══════════════════════════════════════════
 // MAP INIT — Windy with Leaflet fallback
@@ -493,40 +496,35 @@ async function fetchMarkets(){
 }
 
 async function fetchPositions(){
+  // Trade log is the ONLY source of truth
   try{
-    const r=await fetch(POSITIONS_API);
-    if(!r.ok)throw new Error('API '+r.status);
-    const raw=await r.json();
-    // Proxy already filters weather-only positions
-    positionsData=raw.map(p=>{
-      const title=p.title||p.market||p.question||'';
-      let city='Unknown',temp='?',date='';
-      const cm=title.match(/temperature in ([A-Za-z\s]+?)(?:\s+be|\s+on)/i);if(cm)city=cm[1].trim();
-      const tm=title.match(/be\s+([\d≤≥<>]+\s*°[CF])/i);if(tm)temp=tm[1];
-      const dm=title.match(/on\s+([A-Za-z]+\s+\d+)/i);if(dm)date=dm[1];
-      const size=parseFloat(p.size||p.amount||0);
-      const avgPrice=parseFloat(p.avgPrice||p.price||0);
-      const cost=size*avgPrice;
-      const curPrice=parseFloat(p.curPrice||p.currentPrice||avgPrice);
-      
-      // Better resolved detection: check date + curPrice tolerance
-      let resolved=p.closed||p.resolved||(curPrice<0.05)||(curPrice>0.95);
-      // Also check if market date is in the past
-      if(date){
-        try{
-          const year=new Date().getFullYear();
-          const marketDate=new Date(`${date} ${year}`);
-          const today=new Date();today.setHours(0,0,0,0);
-          if(marketDate<today)resolved=true;
-        }catch(e){}
-      }
-      
-      const won=curPrice>0.95;
-      const payout=won?size:0;
-      return{city,temp,date,cost,payout,pnl:resolved?(payout-cost):0,size,avgPrice,curPrice,status:resolved?'resolved':'active',title};
-    });
+    const tr=await fetch(PROXY_BASE+'/trades');
+    if(!tr.ok)throw new Error('Trades API '+tr.status);
+    const tradeLog=await tr.json();
+    
+    if(tradeLog.trades&&tradeLog.trades.length){
+      positionsData=tradeLog.trades.map(t=>({
+        city:t.city||'Unknown',temp:t.temp||'?',date:t.date||'',
+        cost:t.cost||0,payout:t.payout||0,pnl:t.pnl||0,
+        status:t.status||'active',result:t.result||null,
+        size:t.size,avgPrice:t.price,curPrice:null,title:'',
+        id:t.id||''
+      }));
+      tradeSummary=tradeLog.summary||{};
+      positionsLoaded=true;
+      console.log('Trade log loaded:',positionsData.length,'trades, summary:',tradeSummary);
+    } else {
+      positionsData=[];
+      tradeSummary={};
+      positionsLoaded=true;
+      console.log('Trade log empty');
+    }
+  }catch(e){
+    console.error('Trade log fetch failed:',e.message);
+    positionsData=[];
+    tradeSummary={};
     positionsLoaded=true;
-  }catch(e){positionsLoaded=true;}
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -626,19 +624,24 @@ function renderStats(){
   const edges=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=2).length;
   const marketsAvail=Object.keys(marketData).length;
   
+  // Calculate from positionsData (comes from trade log)
   const resolved=positionsData.filter(p=>p.status==='resolved');
   const active=positionsData.filter(p=>p.status==='active');
   const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
-  const totalInv=resolved.reduce((a,b)=>a+b.cost,0);
-  const roi=totalInv>0?((totalPnl/totalInv)*100):0;
+  const resolvedInvested=resolved.reduce((a,b)=>a+b.cost,0);
+  const activeInvested=active.reduce((a,b)=>a+b.cost,0);
+  const roi=resolvedInvested>0?((totalPnl/resolvedInvested)*100):0;
+  const wins=resolved.filter(p=>p.pnl>0).length;
+  const losses=resolved.filter(p=>p.pnl<=0).length;
   
   document.getElementById('stats-bar').innerHTML=[
     {l:'NET P&L',v:positionsLoaded?`${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toFixed(0)}`:'—',c:totalPnl>=0?'var(--green)':'var(--red)'},
     {l:'ROI',v:positionsLoaded?`${roi>=0?'+':''}${roi.toFixed(0)}%`:'—',c:roi>=0?'var(--green)':'var(--red)'},
-    {l:'EDGES',v:edges,c:edges>0?'var(--green)':'var(--t2)'},
+    {l:'W/L',v:positionsLoaded?`${wins}W/${losses}L`:'—',c:'var(--t1)'},
+    {l:'ACTIVE',v:positionsLoaded?`$${activeInvested.toFixed(0)} (${active.length})`:'—',c:'var(--bluel)'},
     {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
+    {l:'EDGES',v:edges,c:edges>0?'var(--green)':'var(--t2)'},
     {l:'RAIN>3mm',v:rain,c:'var(--violet)'},
-    {l:'DRY',v:dry,c:'var(--bluel)'},
     {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
   ].map(s=>`<div class="stat"><div class="stat-l">${s.l}</div><div class="stat-v" style="color:${s.c}">${s.v}</div></div>`).join('');
 }
@@ -807,19 +810,21 @@ function renderBets(el){
 function renderPerf(el){
   if(!positionsLoaded){el.innerHTML='<div class="loading">Fetching performance...</div>';return;}
   const resolved=positionsData.filter(p=>p.status==='resolved');
+  const active=positionsData.filter(p=>p.status==='active');
   const wins=resolved.filter(p=>p.pnl>0);
   const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
-  const totalInv=resolved.reduce((a,b)=>a+b.cost,0);
-  const roi=totalInv>0?((totalPnl/totalInv)*100):0;
+  const resolvedInv=resolved.reduce((a,b)=>a+b.cost,0);
+  const activeInv=active.reduce((a,b)=>a+b.cost,0);
+  const roi=resolvedInv>0?((totalPnl/resolvedInv)*100):0;
   const pnlColor=totalPnl>=0?'var(--green)':'var(--red)';
   
-  let html=`<div style="padding:10px;background:${totalPnl>=0?'var(--greend)':'var(--redd)'};border:1px solid ${totalPnl>=0?'rgba(0,217,126,.2)':'rgba(255,71,87,.2)'};border-radius:6px;margin-bottom:10px">
+  let html=`<div style="padding:12px;background:${totalPnl>=0?'var(--greend)':'var(--redd)'};border:1px solid ${totalPnl>=0?'rgba(0,217,126,.2)':'rgba(255,71,87,.2)'};border-radius:6px;margin-bottom:10px">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-size:12px;color:${pnlColor};letter-spacing:1px">NET P&L</div>
+      <div><div style="font-size:12px;color:${pnlColor};letter-spacing:1px">NET P&L (RESOLVED)</div>
       <div style="font-size:28px;font-weight:800;color:${pnlColor};font-family:var(--sans)">${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toFixed(2)}</div></div>
-      <div style="text-align:right"><div style="font-size:13px;color:var(--t2)">$${totalInv.toFixed(2)} invested</div>
+      <div style="text-align:right"><div style="font-size:13px;color:var(--t2)">$${resolvedInv.toFixed(2)} resolved</div>
       <div style="font-size:16px;font-weight:700;color:var(--bluel);font-family:var(--sans)">${roi>=0?'+':''}${roi.toFixed(0)}% ROI</div>
-      <div style="font-size:12px;color:var(--t2)">${wins.length}W / ${resolved.length-wins.length}L</div></div>
+      <div style="font-size:12px;color:var(--t2)">${wins.length}W / ${resolved.length-wins.length}L · $${activeInv.toFixed(2)} active</div></div>
     </div></div>`;
   
   html+='<div class="section-label">TRADE HISTORY</div>';
@@ -933,7 +938,8 @@ async function loadAllData(){
   renderPanel();
   
   const edges=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=2).length;
-  document.getElementById('fetch-status').textContent=`${Object.keys(weatherData).length} cities · ${Object.keys(marketData).length} markets · ${edges} edges · ${formatDateShort(selectedDate)}`;
+  const tradeInfo=positionsLoaded?` · ${positionsData.length} trades`:'';
+  document.getElementById('fetch-status').textContent=`${Object.keys(weatherData).length} cities · ${Object.keys(marketData).length} markets · ${edges} edges${tradeInfo} · ${formatDateShort(selectedDate)}`;
 }
 
 // ═══════════════════════════════════════════
