@@ -417,7 +417,7 @@ async function fetchGFS(){
     const batch=CITIES.slice(i,i+3);
     await Promise.all(batch.map(async c=>{
       try{
-        const r=await fetch(`https://api.open-meteo.com/v1/gfs?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_gusts_10m&start_date=${selectedDate}&end_date=${selectedDate}&timezone=${encodeURIComponent(c.tz)}`);
+        const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_gusts_10m&start_date=${selectedDate}&end_date=${selectedDate}&timezone=${encodeURIComponent(c.tz)}`);
         if(!r.ok)throw new Error(r.status);
         const d=await r.json();const h=d.hourly||{};
         const temps=h.temperature_2m||[],precip=h.precipitation||[],clouds=h.cloud_cover||[],wind=h.wind_speed_10m||[],gusts=h.wind_gusts_10m||[];
@@ -464,7 +464,7 @@ async function fetchECMWF(){
     const batch=CITIES.slice(i,i+5);
     await Promise.all(batch.map(async c=>{
       try{
-        const r=await fetch(`https://api.open-meteo.com/v1/ecmwf?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation&start_date=${selectedDate}&end_date=${selectedDate}&timezone=${encodeURIComponent(c.tz)}`);
+        const r=await fetch(`https://api.open-meteo.com/v1/ecmwf?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m&start_date=${selectedDate}&end_date=${selectedDate}&timezone=${encodeURIComponent(c.tz)}`);
         if(!r.ok)return;
         const d=await r.json();const h=d.hourly||{};
         const temps=(h.temperature_2m||[]).filter(t=>t!==null);
@@ -641,9 +641,9 @@ function getEdge(cityName){
   
   // Rain edge — only if rain during PEAK hours (11-16)
   if(w.peakRain>3&&mk&&mk.hasMarket){
-    verdict='RAIN 🔴';edgeLevel=2;edgeColor='var(--violet)';
+    verdict='RAIN PEAK';edgeLevel=2;edgeColor='var(--violet)';
   }else if(w.peakRain>1&&mk&&mk.hasMarket&&w.totalRain>5){
-    verdict='RAIN 🟡';edgeLevel=2;edgeColor='var(--violet)';
+    verdict='RAIN EDGE';edgeLevel=2;edgeColor='var(--violet)';
   }
   
   if(confPenalty>0&&edgeLevel>0){
@@ -665,7 +665,6 @@ function getEdge(cityName){
     hasMarket:!!(mk&&mk.hasMarket),daysAhead,confWarning,sourceSpread,
     rainBar:w.rainBar||'',rainTiming,peakGusts:w.peakGusts||0,avgPeakCloud:w.avgPeakCloud||0,
     nSources:sources.length};
-}
 }
 
 // ═══════════════════════════════════════════
@@ -892,7 +891,7 @@ function renderScanner(el){
       });
       html+=`</div>`;
       html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px">
-        <span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':'lotto'}">${e.verdict}</span>
+        <span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':e.verdict.includes('RAIN')?'edge':'lotto'}">${e.verdict}</span>
         ${e.cheapTemps.length?`<span style="font-size:11px;color:var(--green)">${e.cheapTemps.length} cheap near forecast</span>`:''}
       </div>`;
       if(e.confWarning){html+=`<div style="font-size:10px;color:var(--amber);margin-top:3px">${e.confWarning}</div>`}
@@ -1045,7 +1044,7 @@ function selectCity(name){
     }
     
     if(e.hasMarket){
-      html+=`<div style="margin-top:4px"><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':'lotto'}">${e.verdict}</span></div>`;
+      html+=`<div style="margin-top:4px"><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':e.verdict.includes('RAIN')?'edge':'lotto'}">${e.verdict}</span></div>`;
       if(e.confWarning){html+=`<div style="font-size:10px;color:var(--amber);margin-top:3px">${e.confWarning}</div>`}
       if(e.cheapTemps.length){
         html+=`<div style="font-size:11px;color:var(--green);margin-top:4px">Cheap near forecast:</div>`;
