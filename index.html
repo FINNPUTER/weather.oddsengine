@@ -181,7 +181,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:14px
 <!-- FOOTER -->
 <div class="footer">
   <div style="font-size:12px;color:var(--t2)" id="fetch-status">Loading...</div>
-  <div style="font-size:11px;color:var(--t3)">Data: Open-Meteo · OpenWeatherMap · Polymarket</div>
+  <div style="font-size:11px;color:var(--t3)">Data: GFS · ECMWF · OpenWeatherMap · Polymarket</div>
   <a href="https://oddsengine.live" class="flink">OddsEngine →</a>
 </div>
 
@@ -236,7 +236,7 @@ const PROXY_BASE='https://oddsengine-weather-api-production.up.railway.app';
 const MONTHS={1:'january',2:'february',3:'march',4:'april',5:'may',6:'june',7:'july',8:'august',9:'september',10:'october',11:'november',12:'december'};
 
 let selectedDate='';
-let weatherData={}, owmData={}, marketData={}, positionsData=[], positionsLoaded=false;
+let gfsData={}, ecmwfData={}, owmData={}, marketData={}, positionsData=[], positionsLoaded=false;
 let currentTab='scanner', currentFilter='all';
 let dateButtons=[];
 let map=null, L=null, windyStore=null;
@@ -410,42 +410,78 @@ function shiftDates(delta){dateOffset+=delta;buildDateNav();}
 // ═══════════════════════════════════════════
 // DATA FETCHING
 // ═══════════════════════════════════════════
-async function fetchWeatherOM(){
-  weatherData={};
+async function fetchGFS(){
+  gfsData={};
   let done=0;
   for(let i=0;i<CITIES.length;i+=3){
     const batch=CITIES.slice(i,i+3);
     await Promise.all(batch.map(async c=>{
       try{
-        const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m&start_date=${selectedDate}&end_date=${selectedDate}&timezone=${encodeURIComponent(c.tz)}`);
+        const r=await fetch(`https://api.open-meteo.com/v1/gfs?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation,cloud_cover,wind_speed_10m,wind_gusts_10m&start_date=${selectedDate}&end_date=${selectedDate}&timezone=${encodeURIComponent(c.tz)}`);
         if(!r.ok)throw new Error(r.status);
         const d=await r.json();const h=d.hourly||{};
-        const temps=h.temperature_2m||[],precip=h.precipitation||[],clouds=h.cloud_cover||[],wind=h.wind_speed_10m||[];
+        const temps=h.temperature_2m||[],precip=h.precipitation||[],clouds=h.cloud_cover||[],wind=h.wind_speed_10m||[],gusts=h.wind_gusts_10m||[];
         if(!temps.length)return;
         const peak=Math.max(...temps),peakH=temps.indexOf(peak);
         const totalRain=Math.round(precip.reduce((a,b)=>a+b,0)*10)/10;
-        const peakRain=Math.round(precip.slice(10,16).reduce((a,b)=>a+b,0)*10)/10;
-        const amRain=Math.round(precip.slice(6,12).reduce((a,b)=>a+b,0)*10)/10;
-        const pmRain=Math.round(precip.slice(12,18).reduce((a,b)=>a+b,0)*10)/10;
-        const pc=clouds.slice(10,16);
+        // Rain timing: only 11-16 local matters for peak suppression
+        const peakRain=precip.length>=16?Math.round(precip.slice(11,16).reduce((a,b)=>a+b,0)*10)/10:0;
+        const amRain=precip.length>=11?Math.round(precip.slice(6,11).reduce((a,b)=>a+b,0)*10)/10:0;
+        const pmRain=precip.length>=21?Math.round(precip.slice(16,21).reduce((a,b)=>a+b,0)*10)/10:0;
+        const pc=clouds.slice(11,16);
         const avgPeakCloud=pc.length?Math.round(pc.reduce((a,b)=>a+b,0)/pc.length):0;
+        const peakGusts=gusts.length>=16?Math.round(Math.max(...gusts.slice(11,16))*10)/10:0;
+        // Peak hour temps only (11-16 local)
+        const peakHourTemps=temps.slice(11,16);
+        const peakHourMax=peakHourTemps.length?Math.max(...peakHourTemps):peak;
         
-        // Apply airport offset
-        const adjPeak=Math.round((peak+(c.off||0))*10)/10;
-        // Apply rain adjustment: -3°C if >3mm during peak hours
+        const adjPeak=Math.round((peakHourMax+(c.off||0))*10)/10;
+        // Rain adjustment ONLY if rain during peak hours
         const rainAdj=peakRain>3?-3:(peakRain>1?-1:0);
         const finalPeak=Math.round((adjPeak+rainAdj)*10)/10;
         
-        weatherData[c.n]={temps,precip,clouds,wind,rawPeak:peak,peak:adjPeak,finalPeak,peakH,
-          totalRain,amRain,pmRain,peakRain,avgPeakCloud,rainAdj,
+        // Rain timing bar (visual)
+        const rainBar=precip.slice(0,24).map(p=>p>2?'█':p>0.5?'▓':p>0.1?'░':'·').join('');
+        
+        gfsData[c.n]={temps,precip,clouds,wind,gusts,rawPeak:peak,peak:adjPeak,finalPeak,peakH,
+          totalRain,amRain,pmRain,peakRain,avgPeakCloud,rainAdj,peakGusts,rainBar,
+          peakHourMax:Math.round(peakHourMax*10)/10,
           maxWind:Math.round(Math.max(...wind)*10)/10,offset:c.off||0};
         
         updateMarker(c.n,finalPeak,totalRain,false);
       }catch(e){}
       done++;
-      document.getElementById('fetch-status').textContent=`Open-Meteo: ${done}/${CITIES.length}`;
+      document.getElementById('fetch-status').textContent=`GFS: ${done}/${CITIES.length}`;
     }));
     await new Promise(r=>setTimeout(r,150));
+  }
+}
+
+async function fetchECMWF(){
+  ecmwfData={};
+  let done=0;
+  for(let i=0;i<CITIES.length;i+=5){
+    const batch=CITIES.slice(i,i+5);
+    await Promise.all(batch.map(async c=>{
+      try{
+        const r=await fetch(`https://api.open-meteo.com/v1/ecmwf?latitude=${c.lat}&longitude=${c.lon}&hourly=temperature_2m,precipitation&start_date=${selectedDate}&end_date=${selectedDate}&timezone=${encodeURIComponent(c.tz)}`);
+        if(!r.ok)return;
+        const d=await r.json();const h=d.hourly||{};
+        const temps=(h.temperature_2m||[]).filter(t=>t!==null);
+        const precip=(h.precipitation||[]).filter(p=>p!==null);
+        if(!temps.length)return;
+        const peak=Math.max(...temps);
+        const adjPeak=Math.round((peak+(c.off||0))*10)/10;
+        // Use GFS rain timing for adjustment
+        const gfs=gfsData[c.n];
+        const rainAdj=gfs?gfs.rainAdj:0;
+        const finalPeak=Math.round((adjPeak+rainAdj)*10)/10;
+        ecmwfData[c.n]={rawPeak:peak,peak:adjPeak,finalPeak};
+      }catch(e){}
+      done++;
+    }));
+    document.getElementById('fetch-status').textContent=`ECMWF: ${done}/${CITIES.length}`;
+    await new Promise(r=>setTimeout(r,200));
   }
 }
 
@@ -544,90 +580,92 @@ async function fetchPositions(){
 // EDGE DETECTION
 // ═══════════════════════════════════════════
 function getEdge(cityName){
-  const w=weatherData[cityName];
+  const w=gfsData[cityName];
+  const ec=ecmwfData[cityName];
   const o=owmData[cityName];
   const mk=marketData[cityName];
   const c=CITIES.find(x=>x.n===cityName);
   if(!w)return null;
   
-  // Forecast horizon: how many days ahead?
   const today=getDateStr(0);
   const daysAhead=Math.round((new Date(selectedDate+'T12:00:00')-new Date(today+'T12:00:00'))/(86400000));
   
-  // Our adjusted forecast (average of sources if both available)
-  let ourForecast=w.finalPeak;
-  let sources=[{name:'OM',val:w.finalPeak,raw:w.rawPeak}];
-  let sourceSpread=0;
+  // Three sources
+  let sources=[{name:'GFS',val:w.finalPeak,raw:w.rawPeak}];
+  if(ec)sources.push({name:'ECM',val:ec.finalPeak,raw:ec.rawPeak});
   if(o){
     const owmAdj=Math.round((o.adjPeak+(w.rainAdj||0))*10)/10;
     sources.push({name:'OWM',val:owmAdj,raw:o.peak});
-    ourForecast=Math.round(((w.finalPeak+owmAdj)/2)*10)/10;
-    sourceSpread=Math.abs(w.finalPeak-owmAdj);
   }
   
-  // Convert to display unit
+  // Consensus = average of all sources
+  const vals=sources.map(s=>s.val);
+  let ourForecast=Math.round((vals.reduce((a,b)=>a+b,0)/vals.length)*10)/10;
+  const sourceSpread=Math.round((Math.max(...vals)-Math.min(...vals))*10)/10;
+  
   const displayTemp=c.u==='F'?Math.round(ourForecast*9/5+32):Math.round(ourForecast);
   const unit=c.u==='F'?'°F':'°C';
   
-  let verdict='SKIP', edgeLevel=0, cheapTemps=[], edgeColor='var(--t3)';
+  let verdict='SKIP',edgeLevel=0,cheapTemps=[],edgeColor='var(--t3)';
   
-  // Confidence penalty
-  let confPenalty=0;
-  let confWarning='';
-  if(daysAhead>=2){confPenalty=2;confWarning='⚠ 2+ days out — verify with Wunderground';}
-  else if(daysAhead>=1){confPenalty=1;confWarning='⚠ Tomorrow — check closer to peak';}
-  
-  // Source disagreement penalty
-  if(sourceSpread>4){confPenalty=Math.max(confPenalty,2);confWarning='⚠ Sources disagree by '+Math.round(sourceSpread)+'° — low confidence';}
+  // Confidence: more sources agreeing = higher confidence
+  let confPenalty=0,confWarning='';
+  if(daysAhead>=2){confPenalty=2;confWarning='⚠ 2+ days out — verify';}
+  else if(daysAhead>=1){confPenalty=1;confWarning='⚠ Tomorrow — recheck';}
+  if(sourceSpread>4){confPenalty=Math.max(confPenalty,2);confWarning=`⚠ Sources spread ${sourceSpread}° — low confidence`;}
   
   if(mk&&mk.hasMarket){
     const consensus=mk.markets[0];
     const nearTemps=mk.markets.filter(m=>{
       const match=m.title.match(/([\d]+)/);
       if(!match)return false;
-      const mTemp=parseInt(match[1]);
-      const diff=Math.abs(mTemp-displayTemp);
-      return diff<=3&&m.price<15;
+      return Math.abs(parseInt(match[1])-displayTemp)<=3&&m.price<15;
     });
-    
     cheapTemps=nearTemps;
     
-    // Edge scoring
     if(nearTemps.length>0){
       const cheapest=nearTemps.filter(t=>t.price<8);
       if(cheapest.length>0){verdict='BUY';edgeLevel=3;edgeColor='var(--green)';}
       else{verdict='EDGE';edgeLevel=2;edgeColor='var(--blue)';}
     }
     
-    // Check if consensus matches our forecast
     const consMatch=consensus.title.match(/([\d]+)/);
     if(consMatch){
       const consTemp=parseInt(consMatch[1]);
       if(Math.abs(consTemp-displayTemp)>=3){
         verdict=verdict==='SKIP'?'EDGE':verdict;
         edgeLevel=Math.max(edgeLevel,2);
-        edgeColor='var(--blue)';
       }
     }
   }
   
-  // Rain edge
+  // Rain edge — only if rain during PEAK hours (11-16)
   if(w.peakRain>3&&mk&&mk.hasMarket){
-    verdict='RAIN EDGE';edgeLevel=2;edgeColor='var(--violet)';
+    verdict='RAIN 🔴';edgeLevel=2;edgeColor='var(--violet)';
+  }else if(w.peakRain>1&&mk&&mk.hasMarket&&w.totalRain>5){
+    verdict='RAIN 🟡';edgeLevel=2;edgeColor='var(--violet)';
   }
   
-  // Apply confidence penalty — downgrade verdict
   if(confPenalty>0&&edgeLevel>0){
     edgeLevel=Math.max(0,edgeLevel-confPenalty);
-    if(edgeLevel<=1&&verdict!=='SKIP'){
-      verdict='VERIFY';edgeColor='var(--amber)';
-    }
+    if(edgeLevel<=1&&verdict!=='SKIP'){verdict='VERIFY';edgeColor='var(--amber)';}
   }
-  if(daysAhead>0)console.log(`[CONF] ${cityName}: days=${daysAhead} penalty=${confPenalty} spread=${Math.round(sourceSpread)}° verdict=${verdict}`);
+  
+  // Rain timing label
+  let rainTiming='☀DRY';
+  if(w.peakRain>3)rainTiming='🔴PEAK';
+  else if(w.peakRain>1)rainTiming='🟡peak';
+  else if(w.amRain>3)rainTiming='🌧AM';
+  else if(w.pmRain>3)rainTiming='🌧PM';
+  else if(w.totalRain>3)rainTiming='🌧spread';
+  else if(w.totalRain>0)rainTiming=`🌤${w.totalRain}mm`;
   
   return{ourForecast,displayTemp,unit,sources,verdict,edgeLevel,edgeColor,cheapTemps,
     rain:w.totalRain,peakRain:w.peakRain,rainAdj:w.rainAdj,offset:w.offset,
-    hasMarket:!!(mk&&mk.hasMarket),daysAhead,confWarning,sourceSpread};
+    hasMarket:!!(mk&&mk.hasMarket),daysAhead,confWarning,sourceSpread,
+    rainBar:w.rainBar||'',rainTiming,peakGusts:w.peakGusts||0,avgPeakCloud:w.avgPeakCloud||0,
+    nSources:sources.length};
+}
 }
 
 // ═══════════════════════════════════════════
@@ -641,7 +679,7 @@ function rainColor(mm){
 
 function renderTicker(){
   let items=CITIES.map(c=>{
-    const d=weatherData[c.n];if(!d)return'';
+    const d=gfsData[c.n];if(!d)return'';
     const u=c.u==='F'?'°F':'°C';
     const display=c.u==='F'?Math.round(d.finalPeak*9/5+32)+u:d.finalPeak+u;
     const rainIcon=d.totalRain>3?`<span style="color:var(--violet)">🌧${d.totalRain}mm</span>`:'';
@@ -653,8 +691,8 @@ function renderTicker(){
 }
 
 function renderStats(){
-  const rain=Object.values(weatherData).filter(d=>d.totalRain>3).length;
-  const dry=Object.values(weatherData).filter(d=>d.totalRain===0).length;
+  const rain=Object.values(gfsData).filter(d=>d.totalRain>3).length;
+  const dry=Object.values(gfsData).filter(d=>d.totalRain===0).length;
   const edges=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=2).length;
   const signals=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=3).length;
   const marketsAvail=Object.keys(marketData).length;
@@ -693,7 +731,7 @@ function renderStats(){
       {l:'SIGNALS',v:signals,c:signals>0?'var(--green)':'var(--t2)'},
       {l:'EDGES',v:edges,c:edges>0?'var(--blue)':'var(--t2)'},
       {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
-      {l:'CITIES',v:Object.keys(weatherData).length,c:'var(--t1)'},
+      {l:'CITIES',v:Object.keys(gfsData).length,c:'var(--t1)'},
       {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
     ];
   }
@@ -765,7 +803,8 @@ function renderAccuracy(el){
   </div>
   <div class="section-label" style="margin-top:16px">METHODOLOGY</div>
   <div style="font-size:13px;color:var(--t2);line-height:2">
-    🌡 <b style="color:var(--t1)">Open-Meteo</b> — Airport-level hourly forecasts<br>
+    🌡 <b style="color:var(--t1)">GFS (NOAA)</b> — US global forecast model<br>
+    🌍 <b style="color:var(--t1)">ECMWF</b> — European forecast model<br>
     🌤 <b style="color:var(--t1)">OpenWeatherMap</b> — Cross-validation<br>
     ✈ <b style="color:var(--t1)">Airport Offsets</b> — City-to-station delta<br>
     🌧 <b style="color:var(--t1)">Rain Adjustment</b> — Peak suppression modeling<br>
@@ -795,7 +834,7 @@ function renderAbout(el){
 
 function renderScanner(el){
   const sorted=CITIES.map(c=>{
-    const d=weatherData[c.n];const e=getEdge(c.n);const mk=marketData[c.n];
+    const d=gfsData[c.n];const e=getEdge(c.n);const mk=marketData[c.n];
     return{city:c,data:d,edge:e,mk};
   }).filter(x=>x.data).sort((a,b)=>{
     // Sort: edges first, then by edge level, then rain
@@ -840,8 +879,9 @@ function renderScanner(el){
         ${e.sources.map(s=>`<span>${s.name}: ${Math.round(s.val*10)/10}°C</span>`).join('')}
         ${IS_PRIVATE&&e.offset?`<span class="src-adj">✈${e.offset>0?'+':''}${e.offset}°C</span>`:''}
         ${IS_PRIVATE&&e.rainAdj?`<span class="src-adj">🌧${e.rainAdj}°C</span>`:''}
-        ${d.totalRain>0?`<span class="tag tag-rain">${d.totalRain}mm</span>`:'<span class="tag tag-dry">DRY</span>'}
-      </div>`;
+        ${d.totalRain>0?`<span class="tag tag-rain">${e.rainTiming} ${d.totalRain}mm</span>`:'<span class="tag tag-dry">DRY</span>'}
+      </div>
+      ${e.rainBar&&d.totalRain>1?`<div style="font-family:var(--mono);font-size:10px;color:var(--t3);margin:2px 0;letter-spacing:1px" title="Rain: 0h→23h, █>2mm ▓>0.5mm ░>0.1mm">🌧${e.rainBar}<span style="color:var(--t2);margin-left:4px">${e.peakRain>0?'pk:'+e.peakRain+'mm':''}</span></div>`:''}`;
     
     // Market prices + edge
     if(mk&&mk.hasMarket){
@@ -877,7 +917,7 @@ function renderScanner(el){
 
 function renderRecs(el){
   // Actionable recommendations only
-  const edges=CITIES.map(c=>({city:c,edge:getEdge(c.n),data:weatherData[c.n],mk:marketData[c.n]}))
+  const edges=CITIES.map(c=>({city:c,edge:getEdge(c.n),data:gfsData[c.n],mk:marketData[c.n]}))
     .filter(x=>x.edge&&x.edge.edgeLevel>=2&&x.edge.hasMarket)
     .sort((a,b)=>b.edge.edgeLevel-a.edge.edgeLevel);
   
@@ -982,7 +1022,7 @@ function renderPerf(el){
 }
 
 function selectCity(name){
-  const d=weatherData[name];if(!d)return;
+  const d=gfsData[name];if(!d)return;
   const c=CITIES.find(x=>x.n===name);
   const e=getEdge(name);
   const mk=marketData[name];
@@ -996,10 +1036,13 @@ function selectCity(name){
     // Sources
     html+=`<div style="font-size:12px;color:var(--t2)">`;
     e.sources.forEach(s=>{html+=`${s.name}: ${Math.round(s.val*10)/10}°C · `;});
-    html+=`Rain: ${d.totalRain}mm`;
+    html+=`Rain: ${d.totalRain}mm ${e.rainTiming||''}`;
     if(IS_PRIVATE&&e.offset)html+=` · ✈${e.offset>0?'+':''}${e.offset}°C`;
     if(IS_PRIVATE&&e.rainAdj)html+=` · 🌧${e.rainAdj}°C`;
     html+=`</div>`;
+    if(e.rainBar&&d.totalRain>1){
+      html+=`<div style="font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:1px;margin:2px 0" title="Rain 0-23h">🌧${e.rainBar} <span style="color:var(--amber)">pk:${d.peakRain}mm</span></div>`;
+    }
     
     if(e.hasMarket){
       html+=`<div style="margin-top:4px"><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':'lotto'}">${e.verdict}</span></div>`;
@@ -1058,41 +1101,35 @@ function flyTo(name){
 // LOAD ALL DATA FOR SELECTED DATE
 // ═══════════════════════════════════════════
 async function loadAllData(){
-  document.getElementById('panel-content').innerHTML='<div class="loading">Fetching forecast for '+formatDateShort(selectedDate)+'...</div>';
+  document.getElementById('panel-content').innerHTML='<div class="loading">Scanning '+formatDateShort(selectedDate)+' — GFS + ECMWF + OWM...</div>';
   
-  await fetchWeatherOM();
+  await fetchGFS();
   renderTicker();
   renderStats();
   renderPanel();
   
-  document.getElementById('fetch-status').textContent='Fetching OWM forecasts...';
-  await fetchWeatherOWM();
+  document.getElementById('fetch-status').textContent='Fetching ECMWF + OWM...';
+  await Promise.all([fetchECMWF(), fetchWeatherOWM()]);
   
-  // Update markers with edge info
   CITIES.forEach(c=>{
-    const d=weatherData[c.n];
-    const e=getEdge(c.n);
+    const d=gfsData[c.n];const e=getEdge(c.n);
     if(d)updateMarker(c.n,d.finalPeak,d.totalRain,e&&e.edgeLevel>=2);
   });
-  
   renderPanel();
   
   document.getElementById('fetch-status').textContent='Fetching Polymarket prices...';
   await fetchMarkets();
   
-  // Re-render with market data
   CITIES.forEach(c=>{
-    const d=weatherData[c.n];
-    const e=getEdge(c.n);
+    const d=gfsData[c.n];const e=getEdge(c.n);
     if(d)updateMarker(c.n,d.finalPeak,d.totalRain,e&&e.edgeLevel>=2);
   });
-  
-  renderStats();
-  renderPanel();
+  renderStats();renderPanel();
   
   const edges=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=2).length;
   const tradeInfo=positionsLoaded?` · ${positionsData.length} trades`:'';
-  document.getElementById('fetch-status').textContent=`${Object.keys(weatherData).length} cities · ${Object.keys(marketData).length} markets · ${edges} edges${tradeInfo} · ${formatDateShort(selectedDate)}`;
+  const srcInfo=`GFS:${Object.keys(gfsData).length} ECM:${Object.keys(ecmwfData).length} OWM:${Object.keys(owmData).length}`;
+  document.getElementById('fetch-status').textContent=`${srcInfo} · ${Object.keys(marketData).length} markets · ${edges} edges${tradeInfo} · ${formatDateShort(selectedDate)}`;
 }
 
 // ═══════════════════════════════════════════
