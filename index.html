@@ -675,6 +675,34 @@ function rainColor(mm){
   if(mm<.5)return'rgba(139,92,246,.2)';if(mm<2)return'rgba(139,92,246,.4)';
   if(mm<5)return'rgba(139,92,246,.65)';return'rgba(139,92,246,.85)';
 }
+function renderRainBarHTML(precip,peakRain,compact){
+  if(!precip||precip.length<24)return'';
+  const h=compact?10:14;
+  let bars='';
+  for(let i=0;i<24;i++){
+    const p=precip[i]||0;
+    const isPeak=i>=11&&i<=16;
+    const bg=rainColor(p);
+    const border=isPeak?'border-bottom:2px solid var(--amber)':'';
+    const tip=`${i}:00 — ${p.toFixed(1)}mm${isPeak?' (peak)':''}`;
+    bars+=`<div style="flex:1;min-width:0;height:${h}px;background:${bg};border-radius:1px;${border}" title="${tip}"></div>`;
+  }
+  const pkLabel=peakRain>0?`<span style="color:var(--amber);font-size:10px;margin-left:4px">pk:${peakRain}mm</span>`:'';
+  return`<div style="margin:3px 0">
+    <div style="display:flex;gap:1px;height:${h}px">${bars}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1px">
+      <div style="display:flex;gap:6px;font-size:9px;color:var(--t3)"><span>0h</span><span style="margin-left:auto">6</span><span>11</span><span style="color:var(--amber)">pk</span><span>16</span><span>21</span><span>23h</span></div>
+      ${pkLabel}
+    </div>
+    <div style="display:flex;gap:6px;font-size:8px;color:var(--t3);margin-top:1px">
+      <span style="display:flex;align-items:center;gap:2px"><span style="width:6px;height:6px;background:rgba(139,92,246,.2);border-radius:1px"></span>&lt;0.5</span>
+      <span style="display:flex;align-items:center;gap:2px"><span style="width:6px;height:6px;background:rgba(139,92,246,.4);border-radius:1px"></span>&lt;2</span>
+      <span style="display:flex;align-items:center;gap:2px"><span style="width:6px;height:6px;background:rgba(139,92,246,.65);border-radius:1px"></span>&lt;5</span>
+      <span style="display:flex;align-items:center;gap:2px"><span style="width:6px;height:6px;background:rgba(139,92,246,.85);border-radius:1px"></span>5+mm</span>
+      <span style="display:flex;align-items:center;gap:2px"><span style="width:6px;height:2px;background:var(--amber);border-radius:1px"></span>peak</span>
+    </div>
+  </div>`;
+}
 
 function renderTicker(){
   let items=CITIES.map(c=>{
@@ -880,8 +908,7 @@ function renderScanner(el){
         ${IS_PRIVATE&&e.rainAdj?`<span class="src-adj">🌧${e.rainAdj}°C</span>`:''}
         ${d.totalRain>0?`<span class="tag tag-rain">${e.rainTiming} ${d.totalRain}mm</span>`:'<span class="tag tag-dry">DRY</span>'}
       </div>
-      ${e.rainBar&&d.totalRain>1?`<div style="font-family:var(--mono);font-size:10px;color:var(--t3);margin:2px 0;letter-spacing:1px" title="Rain: 0h→23h, █>2mm ▓>0.5mm ░>0.1mm">🌧${e.rainBar}<span style="color:var(--t2);margin-left:4px">${e.peakRain>0?'pk:'+e.peakRain+'mm':''}</span></div>`:''}`;
-    
+      ${d.totalRain>1?renderRainBarHTML(d.precip,d.peakRain,true):''}`;    
     // Market prices + edge
     if(mk&&mk.hasMarket){
       html+=`<div class="mkt-row">`;
@@ -1039,8 +1066,8 @@ function selectCity(name){
     if(IS_PRIVATE&&e.offset)html+=` · ✈${e.offset>0?'+':''}${e.offset}°C`;
     if(IS_PRIVATE&&e.rainAdj)html+=` · 🌧${e.rainAdj}°C`;
     html+=`</div>`;
-    if(e.rainBar&&d.totalRain>1){
-      html+=`<div style="font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:1px;margin:2px 0" title="Rain 0-23h">🌧${e.rainBar} <span style="color:var(--amber)">pk:${d.peakRain}mm</span></div>`;
+    if(d.totalRain>1){
+      html+=renderRainBarHTML(d.precip,d.peakRain,false);
     }
     
     if(e.hasMarket){
