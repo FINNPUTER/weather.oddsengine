@@ -754,7 +754,7 @@ function renderStats(){
     const losses=resolved.filter(p=>p.pnl<=0).length;
     stats=[
       {l:'ROI',v:positionsLoaded&&resolvedInvested>0?`${roi>=0?'+':''}${roi.toFixed(0)}%`:'—',c:roi>=0?'var(--green)':'var(--red)'},
-      {l:'WIN RATE',v:positionsLoaded&&resolved.length?`${Math.round(wins/(wins+losses)*100)}%`:'—',c:'var(--green)'},
+      {l:'TRADES',v:positionsLoaded?`${resolved.length}`:'—',c:'var(--t1)'},
       {l:'SIGNALS',v:signals,c:signals>0?'var(--green)':'var(--t2)'},
       {l:'EDGES',v:edges,c:edges>0?'var(--blue)':'var(--t2)'},
       {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
@@ -808,13 +808,13 @@ function renderAccuracy(el){
   <div style="padding:14px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;margin-bottom:8px">
     <div style="font-size:11px;color:var(--t3);letter-spacing:1px;text-transform:uppercase">RETURN ON INVESTMENT</div>
     <div style="font-size:36px;font-weight:800;font-family:var(--sans);color:var(--green)">${roi>=0?'+':''}${roi.toFixed(0)}%</div>
-    <div style="font-size:12px;color:var(--t2);margin-top:4px">${resolved.length} resolved trades · ${wins}W/${losses}L</div>
+    <div style="font-size:12px;color:var(--t2);margin-top:4px">${resolved.length} resolved trades</div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
     <div style="padding:14px;background:var(--card);border:1px solid var(--bdr);border-radius:8px">
-      <div style="font-size:11px;color:var(--t3);letter-spacing:1px">WIN RATE</div>
-      <div style="font-size:24px;font-weight:800;font-family:var(--sans);color:var(--green)">${winRate}%</div>
-      <div style="font-size:11px;color:var(--t2)">Bets that hit target</div></div>
+      <div style="font-size:11px;color:var(--t3);letter-spacing:1px">TRADES</div>
+      <div style="font-size:24px;font-weight:800;font-family:var(--sans);color:var(--t1)">${resolved.length}</div>
+      <div style="font-size:11px;color:var(--t2)">Resolved predictions</div></div>
     <div style="padding:14px;background:var(--card);border:1px solid var(--bdr);border-radius:8px">
       <div style="font-size:11px;color:var(--t3);letter-spacing:1px">AVG EDGE</div>
       <div style="font-size:24px;font-weight:800;font-family:var(--sans);color:var(--blue)">3.2°</div>
