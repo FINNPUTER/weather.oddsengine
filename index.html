@@ -360,7 +360,8 @@ function updateMarker(name,temp,rain,hasEdge){
   const col=tempColor(temp);
   const rainDot=rain>3?'🌧':'';
   const edgeRing=hasEdge?`box-shadow:0 0 0 3px ${col}44,0 0 14px rgba(30,144,255,.3)`:'';
-  m.setIcon(L.divIcon({className:'',html:`<div class="city-marker" style="width:38px;height:38px;background:${col}55;border-color:${col};${edgeRing}"><span style="font-size:13px">${Math.round(temp)}</span></div><div class="city-label" style="position:absolute;top:40px;left:50%;transform:translateX(-50%)">${name} ${rainDot}</div>`,iconSize:[38,54],iconAnchor:[19,19]}));
+  const label=IS_PRIVATE?Math.round(temp):'•';
+  m.setIcon(L.divIcon({className:'',html:`<div class="city-marker" style="width:38px;height:38px;background:${col}55;border-color:${col};${edgeRing}"><span style="font-size:13px">${label}</span></div><div class="city-label" style="position:absolute;top:40px;left:50%;transform:translateX(-50%)">${name} ${rainDot}</div>`,iconSize:[38,54],iconAnchor:[19,19]}));
 }
 
 // addCityMarkers called from init after Windy loads
@@ -709,10 +710,14 @@ function renderTicker(){
     const d=gfsData[c.n];if(!d)return'';
     const u=c.u==='F'?'°F':'°C';
     const display=c.u==='F'?Math.round(d.finalPeak*9/5+32)+u:d.finalPeak+u;
-    const rainIcon=d.totalRain>3?`<span style="color:var(--violet)">🌧${d.totalRain}mm</span>`:'';
+    const rainIcon=d.totalRain>3?`<span style="color:var(--violet)">🌧${IS_PRIVATE?d.totalRain+'mm':''}</span>`:'';
     const e=getEdge(c.n);
     const edgeIcon=e&&e.edgeLevel>=2?`<span style="color:${e.edgeColor}">⚡</span>`:'';
-    return `<span>${edgeIcon}<b style="color:#fff">${c.n}</b> <span style="color:${tempColor(d.finalPeak)}">${display}</span> ${rainIcon}</span>`;
+    if(IS_PRIVATE){
+      return `<span>${edgeIcon}<b style="color:#fff">${c.n}</b> <span style="color:${tempColor(d.finalPeak)}">${display}</span> ${rainIcon}</span>`;
+    } else {
+      return `<span>${edgeIcon}<b style="color:#fff">${c.n}</b> ${rainIcon}</span>`;
+    }
   }).filter(Boolean).join('');
   document.getElementById('ticker').innerHTML=items+items;
 }
@@ -900,30 +905,37 @@ function renderScanner(el){
     html+=`<div class="city-card ${cardClass}" onclick="flyTo('${c.n}')">
       <div class="cc-head">
         <span class="cc-name">${c.n} <span class="tag tag-region">${c.r}</span></span>
-        <span style="font-size:18px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans)">${display}</span>
+        ${IS_PRIVATE?`<span style="font-size:18px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans)">${display}</span>`:''}
       </div>
       <div class="cc-meta">
-        ${e.sources.map(s=>`<span>${s.name}: ${Math.round(s.val*10)/10}°C</span>`).join('')}
+        ${IS_PRIVATE?e.sources.map(s=>`<span>${s.name}: ${Math.round(s.val*10)/10}°C</span>`).join(''):`<span style="color:var(--t3)">${e.nSources} sources analyzed</span>`}
         ${IS_PRIVATE&&e.offset?`<span class="src-adj">✈${e.offset>0?'+':''}${e.offset}°C</span>`:''}
         ${IS_PRIVATE&&e.rainAdj?`<span class="src-adj">🌧${e.rainAdj}°C</span>`:''}
-        ${d.totalRain>0?`<span class="tag tag-rain">${e.rainTiming} ${d.totalRain}mm</span>`:'<span class="tag tag-dry">DRY</span>'}
+        ${d.totalRain>0?`<span class="tag tag-rain">${IS_PRIVATE?e.rainTiming+' '+d.totalRain+'mm':'Rain detected'}</span>`:'<span class="tag tag-dry">DRY</span>'}
       </div>
-      ${d.totalRain>1?renderRainBarHTML(d.precip,d.peakRain,true):''}`;    
+      ${IS_PRIVATE&&d.totalRain>1?renderRainBarHTML(d.precip,d.peakRain,true):''}`;    
     // Market prices + edge
     if(mk&&mk.hasMarket){
-      html+=`<div class="mkt-row">`;
-      mk.markets.slice(0,8).forEach(m=>{
-        const isNear=e.cheapTemps.some(ct=>ct.title===m.title);
-        html+=`<span class="mkt-chip ${isNear&&m.price<8?'hot':isNear?'warm':''}">${m.title} ${m.price}%</span>`;
-      });
-      html+=`</div>`;
-      html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px">
-        <span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':e.verdict.includes('RAIN')?'edge':'lotto'}">${e.verdict}</span>
-        ${e.cheapTemps.length?`<span style="font-size:11px;color:var(--green)">${e.cheapTemps.length} cheap near forecast</span>`:''}
-      </div>`;
-      if(e.confWarning){html+=`<div style="font-size:10px;color:var(--amber);margin-top:3px">${e.confWarning}</div>`}
+      if(IS_PRIVATE){
+        html+=`<div class="mkt-row">`;
+        mk.markets.slice(0,8).forEach(m=>{
+          const isNear=e.cheapTemps.some(ct=>ct.title===m.title);
+          html+=`<span class="mkt-chip ${isNear&&m.price<8?'hot':isNear?'warm':''}">${m.title} ${m.price}%</span>`;
+        });
+        html+=`</div>`;
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px">
+          <span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':e.verdict.includes('RAIN')?'edge':'lotto'}">${e.verdict}</span>
+          ${e.cheapTemps.length?`<span style="font-size:11px;color:var(--green)">${e.cheapTemps.length} cheap near forecast</span>`:''}
+        </div>`;
+        if(e.confWarning){html+=`<div style="font-size:10px;color:var(--amber);margin-top:3px">${e.confWarning}</div>`}
+      } else {
+        html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+          ${e.edgeLevel>=2?'<span class="tag tag-edge">Signal detected</span>':'<span class="tag tag-skip">Monitoring</span>'}
+          <span style="font-size:11px;color:var(--t3)">Subscribe for details</span>
+        </div>`;
+      }
     } else {
-      html+=`<div style="font-size:12px;color:var(--t3);margin-top:2px">No market yet</div>`;
+      html+=`<div style="font-size:12px;color:var(--t3);margin-top:2px">${IS_PRIVATE?'No market yet':'—'}</div>`;
     }
     
     html+=`</div>`;
@@ -1058,29 +1070,39 @@ function selectCity(name){
     <div style="font-size:12px;color:var(--t2);margin:2px 0">${IS_PRIVATE?c.icao+' · ':''}${c.r} · ${formatDateShort(selectedDate)}</div>`;
   
   if(e){
-    html+=`<div style="font-size:24px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans);margin:4px 0">${e.displayTemp}${u}</div>`;
-    // Sources
-    html+=`<div style="font-size:12px;color:var(--t2)">`;
-    e.sources.forEach(s=>{html+=`${s.name}: ${Math.round(s.val*10)/10}°C · `;});
-    html+=`Rain: ${d.totalRain}mm ${e.rainTiming||''}`;
-    if(IS_PRIVATE&&e.offset)html+=` · ✈${e.offset>0?'+':''}${e.offset}°C`;
-    if(IS_PRIVATE&&e.rainAdj)html+=` · 🌧${e.rainAdj}°C`;
-    html+=`</div>`;
-    if(d.totalRain>1){
-      html+=renderRainBarHTML(d.precip,d.peakRain,false);
-    }
-    
-    if(e.hasMarket){
-      html+=`<div style="margin-top:4px"><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':e.verdict.includes('RAIN')?'edge':'lotto'}">${e.verdict}</span></div>`;
-      if(e.confWarning){html+=`<div style="font-size:10px;color:var(--amber);margin-top:3px">${e.confWarning}</div>`}
-      if(e.cheapTemps.length){
-        html+=`<div style="font-size:11px;color:var(--green);margin-top:4px">Cheap near forecast:</div>`;
-        e.cheapTemps.forEach(t=>{
-          html+=`<div style="font-size:12px;color:var(--t1)">${t.title} @${t.price}%</div>`;
-        });
+    if(IS_PRIVATE){
+      html+=`<div style="font-size:24px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans);margin:4px 0">${e.displayTemp}${u}</div>`;
+      html+=`<div style="font-size:12px;color:var(--t2)">`;
+      e.sources.forEach(s=>{html+=`${s.name}: ${Math.round(s.val*10)/10}°C · `;});
+      html+=`Rain: ${d.totalRain}mm ${e.rainTiming||''}`;
+      if(e.offset)html+=` · ✈${e.offset>0?'+':''}${e.offset}°C`;
+      if(e.rainAdj)html+=` · 🌧${e.rainAdj}°C`;
+      html+=`</div>`;
+      if(d.totalRain>1){
+        html+=renderRainBarHTML(d.precip,d.peakRain,false);
+      }
+      if(e.hasMarket){
+        html+=`<div style="margin-top:4px"><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':e.verdict==='SKIP'?'skip':e.verdict.includes('EDGE')?'edge':e.verdict.includes('RAIN')?'edge':'lotto'}">${e.verdict}</span></div>`;
+        if(e.confWarning){html+=`<div style="font-size:10px;color:var(--amber);margin-top:3px">${e.confWarning}</div>`}
+        if(e.cheapTemps.length){
+          html+=`<div style="font-size:11px;color:var(--green);margin-top:4px">Cheap near forecast:</div>`;
+          e.cheapTemps.forEach(t=>{
+            html+=`<div style="font-size:12px;color:var(--t1)">${t.title} @${t.price}%</div>`;
+          });
+        }
+      } else {
+        html+=`<div style="font-size:12px;color:var(--t3);margin-top:4px">No market for this date</div>`;
       }
     } else {
-      html+=`<div style="font-size:12px;color:var(--t3);margin-top:4px">No market for this date</div>`;
+      html+=`<div style="font-size:13px;color:var(--t2);margin:8px 0;line-height:1.6">
+        ${e.nSources} forecast sources analyzed<br>
+        ${d.totalRain>0?'Rain detected — impact modeled':'Dry conditions'}<br>
+        ${e.edgeLevel>=2?'<span style="color:var(--green);font-weight:600">Signal detected for this city</span>':'Monitoring conditions'}
+      </div>
+      <div style="margin-top:8px;padding:10px;background:linear-gradient(135deg,rgba(30,144,255,.08),rgba(139,92,246,.08));border:1px solid rgba(30,144,255,.2);border-radius:6px;text-align:center">
+        <div style="font-size:12px;color:var(--t2);margin-bottom:6px">Full forecast, rain analysis & trading signals</div>
+        <a href="https://oddsengine.live" style="display:inline-block;padding:6px 18px;background:var(--blue);color:#fff;font-family:var(--sans);font-size:12px;font-weight:600;border-radius:4px;text-decoration:none">Get Access →</a>
+      </div>`;
     }
   }
   
