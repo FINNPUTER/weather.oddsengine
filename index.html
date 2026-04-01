@@ -181,7 +181,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--mono);font-size:14px
 <!-- FOOTER -->
 <div class="footer">
   <div style="font-size:12px;color:var(--t2)" id="fetch-status">Loading...</div>
-  <div style="font-size:11px;color:var(--t3)">Data: GFS · ECMWF · OpenWeatherMap · Polymarket</div>
+  <div style="font-size:11px;color:var(--t3)">Data: GFS · ECMWF · OpenWeatherMap · Wunderground · Polymarket</div>
   <a href="https://oddsengine.live" class="flink">OddsEngine →</a>
 </div>
 
@@ -236,7 +236,7 @@ const PROXY_BASE='https://oddsengine-weather-api-production.up.railway.app';
 const MONTHS={1:'january',2:'february',3:'march',4:'april',5:'may',6:'june',7:'july',8:'august',9:'september',10:'october',11:'november',12:'december'};
 
 let selectedDate='';
-let gfsData={}, ecmwfData={}, owmData={}, marketData={}, positionsData=[], positionsLoaded=false;
+let gfsData={}, ecmwfData={}, owmData={}, wuData={}, marketData={}, positionsData=[], positionsLoaded=false;
 let currentTab='scanner', currentFilter='all';
 let dateButtons=[];
 let map=null, L=null, windyStore=null;
@@ -577,6 +577,17 @@ async function fetchPositions(){
   }
 }
 
+async function fetchWU(){
+  wuData={};
+  try{
+    const r=await fetch(`${PROXY_BASE}/wu?date=${selectedDate}`);
+    if(!r.ok)return;
+    const d=await r.json();
+    if(d.cities)wuData=d.cities;
+    console.log('WU loaded:',Object.keys(wuData).length,'cities for',selectedDate);
+  }catch(e){console.error('WU fetch failed:',e.message);}
+}
+
 // ═══════════════════════════════════════════
 // EDGE DETECTION
 // ═══════════════════════════════════════════
@@ -598,6 +609,11 @@ function getEdge(cityName){
     const owmAdj=Math.round((o.adjPeak+(w.rainAdj||0))*10)/10;
     sources.push({name:'OWM',val:owmAdj,raw:o.peak});
   }
+  
+  // WU data (resolution source)
+  const wu=wuData[cityName];
+  const wuTemp=wu?wu.c:null;
+  const wuF=wu?wu.f:null;
   
   // Consensus = average of all sources
   const vals=sources.map(s=>s.val);
@@ -665,7 +681,7 @@ function getEdge(cityName){
     rain:w.totalRain,peakRain:w.peakRain,rainAdj:w.rainAdj,offset:w.offset,
     hasMarket:!!(mk&&mk.hasMarket),daysAhead,confWarning,sourceSpread,
     rainBar:w.rainBar||'',rainTiming,peakGusts:w.peakGusts||0,avgPeakCloud:w.avgPeakCloud||0,
-    nSources:sources.length};
+    nSources:sources.length,wuTemp,wuF};
 }
 
 // ═══════════════════════════════════════════
@@ -1027,14 +1043,17 @@ function renderScanner(el){
     html+=`<div class="city-card ${cardClass}" onclick="flyTo('${c.n}')">
       <div class="cc-head">
         <span class="cc-name">${c.n} <span class="tag tag-region">${c.r}</span></span>
-        ${IS_PRIVATE?`<span style="font-size:18px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans)">${display}</span>`
+        ${IS_PRIVATE?`<span style="display:flex;align-items:baseline;gap:6px">
+          ${e.wuTemp!==null?`<span style="font-size:18px;font-weight:800;color:#ff9f43;font-family:var(--sans)">${c.u==='F'?e.wuF+'°F':Math.round(e.wuTemp)+'°C'}</span><span style="font-size:9px;color:var(--t3)">WU</span>`:''}
+          <span style="font-size:14px;font-weight:600;color:${tempColor(e.ourForecast)};font-family:var(--sans);${e.wuTemp!==null?'opacity:.6':''}">${display}</span><span style="font-size:9px;color:var(--t3)">AVG</span>
+        </span>`
         :`<span style="font-size:16px;display:flex;align-items:center;gap:6px">
           <span>${d.totalRain>3?(d.peakRain>3?'⛈':'🌧'):d.totalRain>0?'🌦':'☀️'}</span>
           ${liveData[c.n]?`<span style="font-size:18px;font-weight:800;color:${tempColor(liveData[c.n].temp)};font-family:var(--sans)">${c.u==='F'?Math.round(liveData[c.n].temp*9/5+32)+'°F':Math.round(liveData[c.n].temp)+'°C'}</span><span style="font-size:10px;color:var(--t3)">NOW</span>`:''}
         </span>`}
       </div>
       <div class="cc-meta">
-        ${IS_PRIVATE?e.sources.map(s=>`<span>${s.name}: ${Math.round(s.val*10)/10}°C</span>`).join('')
+        ${IS_PRIVATE?e.sources.map(s=>`<span>${s.name}: ${Math.round(s.val*10)/10}°C</span>`).join('')+(e.wuTemp!==null?`<span style="color:#ff9f43;font-weight:600">WU: ${e.wuTemp}°C</span>`:'')
         :`<span style="color:var(--t2)">${d.totalRain>3?'Rain impact modeled':d.totalRain>0?'Light precipitation':'Clear conditions'}</span>`}
         ${IS_PRIVATE&&e.offset?`<span class="src-adj">✈${e.offset>0?'+':''}${e.offset}°C</span>`:''}
         ${IS_PRIVATE&&e.rainAdj?`<span class="src-adj">🌧${e.rainAdj}°C</span>`:''}
@@ -1302,8 +1321,8 @@ async function loadAllData(){
   renderStats();
   renderPanel();
   
-  document.getElementById('fetch-status').textContent='Fetching ECMWF + OWM...';
-  await Promise.all([fetchECMWF(), fetchWeatherOWM()]);
+  document.getElementById('fetch-status').textContent='Fetching ECMWF + OWM + WU...';
+  await Promise.all([fetchECMWF(), fetchWeatherOWM(), fetchWU()]);
   
   CITIES.forEach(c=>{
     const d=gfsData[c.n];const e=getEdge(c.n);
@@ -1322,7 +1341,7 @@ async function loadAllData(){
   
   const edges=CITIES.map(c=>getEdge(c.n)).filter(e=>e&&e.edgeLevel>=2).length;
   const tradeInfo=positionsLoaded?` · ${positionsData.length} trades`:'';
-  const srcInfo=`GFS:${Object.keys(gfsData).length} ECM:${Object.keys(ecmwfData).length} OWM:${Object.keys(owmData).length}`;
+  const srcInfo=`GFS:${Object.keys(gfsData).length} ECM:${Object.keys(ecmwfData).length} OWM:${Object.keys(owmData).length} WU:${Object.keys(wuData).length}`;
   document.getElementById('fetch-status').textContent=`${srcInfo} · ${Object.keys(marketData).length} markets · ${edges} edges${tradeInfo} · ${formatDateShort(selectedDate)}`;
 }
 
