@@ -357,10 +357,12 @@ function addCityMarkers(){
 function updateMarker(name,temp,rain,hasEdge){
   const m=markers[name];if(!m)return;
   const c=m.cityData;
-  const col=tempColor(temp);
+  let col=tempColor(temp);
   const rainDot=rain>3?'🌧':'';
   const edgeRing=hasEdge?`box-shadow:0 0 0 3px ${col}44,0 0 14px rgba(30,144,255,.3)`:'';
-  const label=IS_PRIVATE?Math.round(temp):(liveData[name]?(c.u==='F'?Math.round(liveData[name].temp*9/5+32):Math.round(liveData[name].temp)):Math.round(temp));
+  const wuVal=wuData[name];
+  const label=IS_PRIVATE?(wuVal?(c.u==='F'?wuVal.f:Math.round(wuVal.c)):Math.round(temp)):(liveData[name]?(c.u==='F'?Math.round(liveData[name].temp*9/5+32):Math.round(liveData[name].temp)):Math.round(temp));
+  if(wuVal&&IS_PRIVATE)col=tempColor(wuVal.c);
   m.setIcon(L.divIcon({className:'',html:`<div class="city-marker" style="width:38px;height:38px;background:${col}55;border-color:${col};${edgeRing}"><span style="font-size:13px">${label}</span></div><div class="city-label" style="position:absolute;top:40px;left:50%;transform:translateX(-50%)">${name} ${rainDot}</div>`,iconSize:[38,54],iconAnchor:[19,19]}));
 }
 
@@ -1135,10 +1137,10 @@ function renderRecs(el){
     html+=`<div class="city-card edge-strong" style="padding:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div><span class="cc-name" style="font-size:14px">${c.n}</span><span class="tag tag-${e.verdict==='BUY'?'buy':e.verdict==='VERIFY'?'verify':'edge'}" style="margin-left:8px">${e.verdict}</span></div>
-        <span style="font-size:22px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans)">${e.displayTemp}${u}</span>
+        <span style="font-size:22px;font-weight:800;color:${e.wuTemp!==null?'#ff9f43':tempColor(e.ourForecast)};font-family:var(--sans)">${e.wuTemp!==null?(c.u==='F'?e.wuF+'°F':Math.round(e.wuTemp)+'°C'):e.displayTemp+u}</span>
       </div>
       <div style="font-size:12px;color:var(--t2);margin-bottom:6px">
-        Forecast: ${e.sources.map(s=>`${s.name} ${Math.round(s.val*10)/10}°C`).join(' · ')}
+        Forecast: ${e.sources.map(s=>`${s.name} ${Math.round(s.val*10)/10}°C`).join(' · ')}${e.wuTemp!==null?` · <span style="color:#ff9f43;font-weight:600">WU ${e.wuTemp}°C</span>`:''}
         ${e.offset?` · Airport ${e.offset>0?'+':''}${e.offset}°C`:''}
         ${e.rainAdj?` · Rain adj ${e.rainAdj}°C`:''}
       </div>`;
@@ -1232,9 +1234,16 @@ function selectCity(name){
   
   if(e){
     if(IS_PRIVATE){
-      html+=`<div style="font-size:24px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans);margin:4px 0">${e.displayTemp}${u}</div>`;
+      const wuPopup=wuData[name];
+      const wuDisp=wuPopup?(c.u==='F'?wuPopup.f+'°F':Math.round(wuPopup.c)+'°C'):null;
+      if(wuDisp){
+        html+=`<div style="font-size:24px;font-weight:800;color:#ff9f43;font-family:var(--sans);margin:4px 0">${wuDisp} <span style="font-size:11px;color:var(--t3);font-weight:400">WU</span> <span style="font-size:16px;font-weight:600;color:${tempColor(e.ourForecast)};opacity:.6">${e.displayTemp}${u}</span> <span style="font-size:11px;color:var(--t3);font-weight:400">AVG</span></div>`;
+      } else {
+        html+=`<div style="font-size:24px;font-weight:800;color:${tempColor(e.ourForecast)};font-family:var(--sans);margin:4px 0">${e.displayTemp}${u}</div>`;
+      }
       html+=`<div style="font-size:12px;color:var(--t2)">`;
       e.sources.forEach(s=>{html+=`${s.name}: ${Math.round(s.val*10)/10}°C · `;});
+      if(wuPopup)html+=`<span style="color:#ff9f43;font-weight:600">WU: ${wuPopup.c}°C</span> · `;
       html+=`Rain: ${d.totalRain}mm ${e.rainTiming||''}`;
       if(e.offset)html+=` · ✈${e.offset>0?'+':''}${e.offset}°C`;
       if(e.rainAdj)html+=` · 🌧${e.rainAdj}°C`;
