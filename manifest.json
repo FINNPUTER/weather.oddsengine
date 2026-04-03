@@ -1,0 +1,13 @@
+{
+  "name": "OddsEngine Weather",
+  "short_name": "OddsEngine",
+  "description": "Weather Intelligence · Edge Detection",
+  "start_url": "/?m=private",
+  "display": "standalone",
+  "background_color": "#04080d",
+  "theme_color": "#00d97e",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}
