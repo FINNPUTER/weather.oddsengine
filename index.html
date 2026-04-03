@@ -759,10 +759,15 @@ function renderStats(){
     const roi=resolvedInvested>0?((totalPnl/resolvedInvested)*100):0;
     const wins=resolved.filter(p=>p.pnl>0).length;
     const losses=resolved.filter(p=>p.pnl<=0).length;
+    // Per-city W/L (a city counts as W if any bet in that city won)
+    const cityGroups={};
+    resolved.forEach(p=>{const k=p.city+'|'+p.date;if(!cityGroups[k])cityGroups[k]={won:false};if(p.pnl>0)cityGroups[k].won=true;});
+    const cityWins=Object.values(cityGroups).filter(g=>g.won).length;
+    const cityLosses=Object.values(cityGroups).filter(g=>!g.won).length;
     stats=[
       {l:'NET P&L',v:positionsLoaded?`${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toFixed(0)}`:'—',c:totalPnl>=0?'var(--green)':'var(--red)'},
       {l:'ROI',v:positionsLoaded?`${roi>=0?'+':''}${roi.toFixed(0)}%`:'—',c:roi>=0?'var(--green)':'var(--red)'},
-      {l:'W/L',v:positionsLoaded?`${wins}W/${losses}L`:'—',c:'var(--t1)'},
+      {l:'W/L',v:positionsLoaded?`${cityWins}W/${cityLosses}L`:'—',c:'var(--t1)'},
       {l:'ACTIVE',v:positionsLoaded?`$${activeInvested.toFixed(0)} (${active.length})`:'—',c:'var(--bluel)'},
       {l:'EDGES',v:edges,c:edges>0?'var(--green)':'var(--t2)'},
       {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
@@ -898,19 +903,28 @@ function renderLive(el){
   // Sort by gap size (biggest mismatch first)
   rows.sort((a,b)=>Math.abs(b.gap||0)-Math.abs(a.gap||0));
 
-  // Cities with active bets first
-  const activeCities=new Set(positionsData.filter(p=>p.status==='active').map(p=>p.city));
+  // Cities with active bets first — include dates
+  const activeBetInfo={};
+  positionsData.filter(p=>p.status==='active').forEach(p=>{
+    if(!activeBetInfo[p.city])activeBetInfo[p.city]=[];
+    const d=p.date||'';
+    if(!activeBetInfo[p.city].includes(d))activeBetInfo[p.city].push(d);
+  });
+  const activeCities=new Set(Object.keys(activeBetInfo));
 
   const withBets=rows.filter(r=>activeCities.has(r.city.n));
   const withoutBets=rows.filter(r=>!activeCities.has(r.city.n));
 
   if(withBets.length){
     html+=`<div class="section-label" style="color:var(--green)">YOUR POSITIONS — LIVE</div>`;
-    withBets.forEach(r=>html+=renderLiveCard(r,true));
+    withBets.forEach(r=>{
+      const dates=activeBetInfo[r.city.n]||[];
+      html+=renderLiveCard(r,true,dates);
+    });
   }
 
   html+=`<div class="section-label" style="margin-top:10px">ALL CITIES</div>`;
-  withoutBets.forEach(r=>html+=renderLiveCard(r,false));
+  withoutBets.forEach(r=>html+=renderLiveCard(r,false,[]));
 
   const ts=Object.values(liveData)[0]?.time||'';
   html+=`<div style="font-size:10px;color:var(--t3);margin-top:8px;text-align:center">Last update: ${ts} · Source: Open-Meteo Current Weather</div>`;
@@ -918,14 +932,15 @@ function renderLive(el){
   el.innerHTML=html;
 }
 
-function renderLiveCard(r,hasBet){
+function renderLiveCard(r,hasBet,betDates){
   const betBorder=hasBet?'border-left:3px solid var(--green);':'';
+  const dateLabel=betDates&&betDates.length?betDates.map(d=>{const p=d.split('-');return p.length===3?`${p[1]}/${p[2]}`:'';}).filter(Boolean).join(', '):'';
   return`<div class="city-card" style="${betBorder}padding:8px 12px;margin-bottom:4px" onclick="flyTo('${r.city.n}')">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
         <span style="font-weight:600;color:#fff;font-family:var(--sans)">${r.city.n}</span>
         <span class="tag tag-region" style="margin-left:4px">${r.city.r}</span>
-        ${hasBet?'<span style="font-size:9px;background:var(--greend);color:var(--green);padding:1px 6px;border-radius:3px;margin-left:4px">BET</span>':''}
+        ${hasBet?`<span style="font-size:9px;background:var(--greend);color:var(--green);padding:1px 6px;border-radius:3px;margin-left:4px">BET</span>${dateLabel?`<span style="font-size:9px;color:var(--t3);margin-left:4px">${dateLabel}</span>`:''}`:''}
       </div>
       <div style="text-align:right">
         <span style="font-size:20px;font-weight:800;color:${tempColor(r.liveTemp)};font-family:var(--sans)">${r.liveDisplay}${r.u}</span>
@@ -1206,7 +1221,7 @@ function renderPerf(el){
       <div style="font-size:28px;font-weight:800;color:${pnlColor};font-family:var(--sans)">${totalPnl>=0?'+':''}$${Math.abs(totalPnl).toFixed(2)}</div></div>
       <div style="text-align:right"><div style="font-size:13px;color:var(--t2)">$${resolvedInv.toFixed(2)} resolved</div>
       <div style="font-size:16px;font-weight:700;color:var(--bluel);font-family:var(--sans)">${roi>=0?'+':''}${roi.toFixed(0)}% ROI</div>
-      <div style="font-size:12px;color:var(--t2)">${wins.length}W / ${resolved.length-wins.length}L · $${activeInv.toFixed(2)} active</div></div>
+      <div style="font-size:12px;color:var(--t2)">$${activeInv.toFixed(2)} active</div></div>
     </div></div>`;
   
   html+='<div class="section-label">TRADE HISTORY</div>';
