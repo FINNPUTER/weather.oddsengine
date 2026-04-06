@@ -838,11 +838,11 @@ function renderStats(){
       const p=onChainPnl;
       stats=[
         {l:'ROI',v:`${p.roi>=0?'+':''}${p.roi.toFixed(0)}%`,c:p.roi>=0?'var(--green)':'var(--red)'},
-        {l:'POSITIONS',v:`${p.positions}`,c:'var(--t1)'},
+        {l:'TRADES',v:positionsLoaded?`${positionsData.length}`:`${p.positions}`,c:'var(--t1)'},
+        {l:'POSITIONS',v:`${p.positions}`,c:'var(--bluel)'},
         {l:'SIGNALS',v:signals,c:signals>0?'var(--green)':'var(--t2)'},
         {l:'EDGES',v:edges,c:edges>0?'var(--blue)':'var(--t2)'},
         {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
-        {l:'CITIES',v:Object.keys(gfsData).length,c:'var(--t1)'},
         {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
       ];
     } else {
