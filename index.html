@@ -803,9 +803,9 @@ function renderStats(){
         {l:'ROI',v:`${p.roi>=0?'+':''}${p.roi.toFixed(0)}%`,c:p.roi>=0?'var(--green)':'var(--red)'},
         {l:'W/L',v:wlStr,c:'var(--t1)'},
         {l:'ACTIVE',v:`$${p.active.toFixed(0)} (${p.active_count})`,c:'var(--bluel)'},
+        {l:'TRADES',v:positionsLoaded?`${positionsData.length}`:'—',c:'var(--t1)'},
         {l:'EDGES',v:edges,c:edges>0?'var(--green)':'var(--t2)'},
         {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
-        {l:'RAIN>3mm',v:rain,c:'var(--violet)'},
         {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
       ];
     } else {
