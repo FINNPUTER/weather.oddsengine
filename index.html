@@ -265,6 +265,7 @@ let currentTab='scanner', currentFilter='all';
 let dateButtons=[];
 let map=null, L=null, windyStore=null;
 let tradeSummary={};
+let onChainPnl=null;
 const IS_PRIVATE=new URLSearchParams(window.location.search).get('m')==='private';
 let owmLayersMap={};
 
@@ -603,6 +604,18 @@ async function fetchPositions(){
   }
 }
 
+async function fetchOnChainPnl(){
+  try{
+    const r=await fetch(PROXY_BASE+'/weather-pnl');
+    if(!r.ok)throw new Error('PnL API '+r.status);
+    onChainPnl=await r.json();
+    console.log('On-chain PnL loaded:',onChainPnl);
+  }catch(e){
+    console.error('On-chain PnL fetch failed:',e.message);
+    onChainPnl=null;
+  }
+}
+
 async function fetchWU(){
   wuData={};
   try{
@@ -775,6 +788,20 @@ function renderStats(){
   
   let stats;
   if(IS_PRIVATE){
+    // Use on-chain data when available (accurate), fall back to trade log
+    if(onChainPnl && !onChainPnl.error){
+      const p=onChainPnl;
+      stats=[
+        {l:'NET P&L',v:`${p.pnl>=0?'+':''}$${Math.abs(p.pnl).toFixed(0)}`,c:p.pnl>=0?'var(--green)':'var(--red)'},
+        {l:'ROI',v:`${p.roi>=0?'+':''}${p.roi.toFixed(0)}%`,c:p.roi>=0?'var(--green)':'var(--red)'},
+        {l:'W/L',v:`${p.wins_pending}W pending`,c:'var(--t1)'},
+        {l:'ACTIVE',v:`$${p.active.toFixed(0)} (${p.active_count})`,c:'var(--bluel)'},
+        {l:'EDGES',v:edges,c:edges>0?'var(--green)':'var(--t2)'},
+        {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
+        {l:'RAIN>3mm',v:rain,c:'var(--violet)'},
+        {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
+      ];
+    } else {
     const resolved=positionsData.filter(p=>p.status==='resolved');
     const active=positionsData.filter(p=>p.status==='active');
     const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
@@ -783,7 +810,6 @@ function renderStats(){
     const roi=resolvedInvested>0?((totalPnl/resolvedInvested)*100):0;
     const wins=resolved.filter(p=>p.pnl>0).length;
     const losses=resolved.filter(p=>p.pnl<=0).length;
-    // Per-city W/L (a city counts as W if any bet in that city won)
     const cityGroups={};
     resolved.forEach(p=>{const k=p.city+'|'+p.date;if(!cityGroups[k])cityGroups[k]={won:false};if(p.pnl>0)cityGroups[k].won=true;});
     const cityWins=Object.values(cityGroups).filter(g=>g.won).length;
@@ -798,8 +824,21 @@ function renderStats(){
       {l:'RAIN>3mm',v:rain,c:'var(--violet)'},
       {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
     ];
+    }
   }else{
-    // Public mode — show ROI % but no dollar amounts
+    // Public mode — use on-chain ROI if available
+    if(onChainPnl && !onChainPnl.error){
+      const p=onChainPnl;
+      stats=[
+        {l:'ROI',v:`${p.roi>=0?'+':''}${p.roi.toFixed(0)}%`,c:p.roi>=0?'var(--green)':'var(--red)'},
+        {l:'POSITIONS',v:`${p.positions}`,c:'var(--t1)'},
+        {l:'SIGNALS',v:signals,c:signals>0?'var(--green)':'var(--t2)'},
+        {l:'EDGES',v:edges,c:edges>0?'var(--blue)':'var(--t2)'},
+        {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
+        {l:'CITIES',v:Object.keys(gfsData).length,c:'var(--t1)'},
+        {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
+      ];
+    } else {
     const resolved=positionsData.filter(p=>p.status==='resolved');
     const resolvedInvested=resolved.reduce((a,b)=>a+b.cost,0);
     const totalPnl=resolved.reduce((a,b)=>a+b.pnl,0);
@@ -815,6 +854,7 @@ function renderStats(){
       {l:'CITIES',v:Object.keys(gfsData).length,c:'var(--t1)'},
       {l:'DATE',v:formatDateShort(selectedDate),c:'var(--t1)'}
     ];
+    }
   }
   document.getElementById('stats-bar').innerHTML=stats.map(s=>`<div class="stat"><div class="stat-l">${s.l}</div><div class="stat-v" style="color:${s.c}">${s.v}</div></div>`).join('');
 }
@@ -1415,6 +1455,7 @@ async function init(){
   await initMap();
   
   // Fetch trade log for ROI/stats (both modes)
+  fetchOnChainPnl().then(()=>{renderStats();});
   fetchPositions().then(()=>{renderStats();renderPanel();});
   
   await loadAllData();
