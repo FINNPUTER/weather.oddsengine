@@ -791,10 +791,17 @@ function renderStats(){
     // Use on-chain data when available (accurate), fall back to trade log
     if(onChainPnl && !onChainPnl.error){
       const p=onChainPnl;
+      // W/L from trade log (more detail than on-chain)
+      const resolved=positionsData.filter(p=>p.status==='resolved');
+      const cityGroups={};
+      resolved.forEach(p=>{const k=p.city+'|'+p.date;if(!cityGroups[k])cityGroups[k]={won:false};if(p.pnl>0)cityGroups[k].won=true;});
+      const cityWins=Object.values(cityGroups).filter(g=>g.won).length;
+      const cityLosses=Object.values(cityGroups).filter(g=>!g.won).length;
+      const wlStr=positionsLoaded&&(cityWins+cityLosses)>0?`${cityWins}W/${cityLosses}L`:`${p.wins_pending}W pending`;
       stats=[
-        {l:'NET P&L',v:`${p.pnl>=0?'+':''}$${Math.abs(p.pnl).toFixed(0)}`,c:p.pnl>=0?'var(--green)':'var(--red)'},
+        {l:'NET P&L',v:`+$${p.total.toFixed(0)}`,c:'var(--green)'},
         {l:'ROI',v:`${p.roi>=0?'+':''}${p.roi.toFixed(0)}%`,c:p.roi>=0?'var(--green)':'var(--red)'},
-        {l:'W/L',v:`${p.wins_pending}W pending`,c:'var(--t1)'},
+        {l:'W/L',v:wlStr,c:'var(--t1)'},
         {l:'ACTIVE',v:`$${p.active.toFixed(0)} (${p.active_count})`,c:'var(--bluel)'},
         {l:'EDGES',v:edges,c:edges>0?'var(--green)':'var(--t2)'},
         {l:'MARKETS',v:marketsAvail,c:'var(--bluel)'},
