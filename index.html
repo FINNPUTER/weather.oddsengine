@@ -45,26 +45,46 @@ p{color:var(--text-secondary);font-size:.95rem;line-height:1.65;margin-bottom:14
 .btn-secondary:hover{border-color:var(--text-secondary);background:rgba(255,255,255,.04)}
 .tick{font-family:var(--font-mono);font-size:.68rem;color:var(--text-tertiary);
   letter-spacing:.1em;margin-top:30px}
+
+@media (max-width:640px){
+  .container{padding:0 16px}
+  header{padding:36px 0 24px}
+  h1{font-size:1.6rem}
+  .stats{grid-template-columns:1fr 1fr;gap:8px}
+  .stat{padding:14px}
+  .stat .n{font-size:1.15rem}
+  table{font-size:.74rem;display:block;overflow-x:auto;white-space:nowrap}
+  th,td{padding:9px 10px}
+  .note{padding:13px 15px;font-size:.83rem}
+  .section-label{margin:30px 0 10px}
+  nav{padding:11px 0}
+  .logo{font-size:.84rem}
+  .btn{padding:7px 14px;font-size:.76rem}
+  .wrap{max-width:none}
+  h1{font-size:1.55rem}
+  .btns{flex-direction:column}
+  .btns .btn{width:100%;justify-content:center}
+}
 </style>
 </head>
 <body>
 <div class="wrap"><div class="inner">
-  <img src="logo.png" alt="OddsEngine" class="logo">
-  <h1>This page has moved.</h1>
-  <p>The weather map lived on a server that no longer exists, so it has been
-    showing nothing but a loading spinner. Rather than repair a page that was
-    decoration, we retired it.</p>
+ <img src="logo.png" alt="OddsEngine" class="logo">
+ <h1>This page has moved.</h1>
+ <p>The weather map lived on a server that no longer exists, so it has been
+ showing nothing but a loading spinner. Rather than repair a page that was
+ decoration, we retired it.</p>
 
-  <div class="note"><p><b>Everything it showed, and more, is on the dashboard:</b>
-    all 50 cities, the full probability distribution for every bracket, the
-    executable price, and every signal scored — including the markets we skip,
-    with the reason.</p></div>
+ <div class="note"><p><b>Everything it showed, and more, is on the dashboard:</b>
+ all 50 cities, the full probability distribution for every bracket, the
+ executable price, and every signal scored including the markets we skip,
+ with the reason.</p></div>
 
-  <div class="btns">
-    <a href="https://public.oddsengine.live" class="btn btn-primary">Open the dashboard</a>
-    <a href="https://oddsengine.live" class="btn btn-secondary">oddsengine.live</a>
-  </div>
-  <div class="tick">REDIRECTING IN 3s</div>
+ <div class="btns">
+ <a href="https://public.oddsengine.live" class="btn btn-primary">Open the dashboard</a>
+ <a href="https://oddsengine.live" class="btn btn-secondary">oddsengine.live</a>
+ </div>
+ <div class="tick">REDIRECTING IN 3s</div>
 </div></div>
 </body>
 </html>
